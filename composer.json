@@ -1,25 +1,19 @@
 {
     "name": "apiato/repository",
-    "description": "Modern Repository Pattern for Laravel with Apiato integration - Professional replacement for l5-repository",
+    "description": "Complete drop-in replacement for l5-repository with enhanced performance and Apiato integration",
     "keywords": [
-        "laravel", "repository", "eloquent", "apiato", "porto", "sap",
-        "cache", "criteria", "pattern", "hashid", "fractal", "presenter"
+        "laravel", "repository", "eloquent", "apiato", "l5-repository",
+        "cache", "criteria", "pattern", "hashid", "fractal", "presenter", "validation"
     ],
     "license": "MIT",
     "type": "library",
     "authors": [
         {
             "name": "Apiato Team",
-            "email": "support@apiato.io",
-            "homepage": "https://apiato.io"
+            "email": "support@apiato.io"
         }
     ],
-    "homepage": "https://github.com/apiato/repository",
-    "support": {
-        "issues": "https://github.com/apiato/repository/issues",
-        "source": "https://github.com/apiato/repository",
-        "docs": "https://apiato.io/docs/components/repository"
-    },
+    "homepage": "https://github.com/GigiArteni/apiato-repository",
     "require": {
         "php": "^8.1",
         "illuminate/cache": "^11.0|^12.0",
@@ -35,18 +29,11 @@
     "require-dev": {
         "laravel/framework": "^11.0|^12.0",
         "orchestra/testbench": "^9.0|^10.0",
-        "phpunit/phpunit": "^10.0|^11.0",
-        "mockery/mockery": "^1.6",
-        "phpstan/phpstan": "^1.10"
-    },
-    "suggest": {
-        "apiato/core": "For full Apiato framework integration",
-        "hashids/hashids": "For HashId encoding/decoding support",
-        "predis/predis": "For Redis cache support"
+        "phpunit/phpunit": "^10.0|^11.0"
     },
     "autoload": {
         "psr-4": {
-            "Apiato\\Repository\\": "src/"
+            "Apiato\\Repository\\": "src/Apiato/Repository/"
         }
     },
     "autoload-dev": {
@@ -61,19 +48,11 @@
             ]
         }
     },
-    "config": {
-        "sort-packages": true
-    },
-    "minimum-stability": "dev",
-    "prefer-stable": true,
-    "scripts": {
-        "test": "vendor/bin/phpunit",
-        "test-coverage": "vendor/bin/phpunit --coverage-html coverage",
-        "analyse": "vendor/bin/phpstan analyse",
-        "cs-fix": "vendor/bin/php-cs-fixer fix"
-    },
     "replace": {
         "prettus/l5-repository": "*",
         "andersao/l5-repository": "*"
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit"
     }
 }
