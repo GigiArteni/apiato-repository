@@ -1,0 +1,12 @@
+/vendor/
+composer.lock
+.phpunit.result.cache
+.phpunit.cache/
+.DS_Store
+Thumbs.db
+.env
+.vscode/settings.json
+.idea/
+*.log
+coverage/
+.php-cs-fixer.cache

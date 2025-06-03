@@ -1,0 +1,43 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{NAMESPACE}};
+
+use {{MODEL_NAMESPACE}};
+use Apiato\Repository\Contracts\CacheableInterface;
+use Apiato\Repository\Eloquent\BaseRepository;
+use Apiato\Repository\Traits\CacheableRepository;
+use Apiato\Repository\Traits\HashIdRepository;
+
+/**
+ * {{CLASS}} Repository with caching and HashId support
+ */
+class {{CLASS}} extends BaseRepository implements CacheableInterface
+{
+    use CacheableRepository, HashIdRepository;
+
+    /**
+     * Searchable fields for the repository
+     */
+    protected array $fieldSearchable = [
+        // Add your searchable fields here
+        // 'name' => 'like',
+        // 'email' => '=',
+        // 'status' => 'in',
+    ];
+    
+    /**
+     * Cache configuration
+     */
+    protected int $cacheMinutes = 60;
+    protected array $cacheTags = ['{{MODEL_LOWER}}'];
+
+    /**
+     * Specify Model class name
+     */
+    public function model(): string
+    {
+        return {{MODEL}}::class;
+    }
+}
