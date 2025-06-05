@@ -734,7 +734,7 @@ class RequestCriteria implements CriteriaInterface
             $searchData = $this->parserSearchData($search);
             $search = $this->parserSearchValue($search);
 
-            $modelForceAndWhere = strtolower($searchData->get('isForceAndWhere', 'or'));
+            $modelForceAndWhere = strtolower($searchData->get('searchJoin', 'or'));
 
             $model = $model->where(function ($query) use ($fields, $search, $searchData, $isFirstField, $modelForceAndWhere, $repository) {
                 foreach ($fields as $field => $condition) {
