@@ -7,8 +7,8 @@ use Apiato\Repository\Contracts\CriteriaInterface;
 use Apiato\Repository\Contracts\RepositoryInterface;
 
 /**
- * Enhanced RequestCriteria - 100% compatible with l5-repository + Apiato enhancements
- * Includes performance improvements and HashId support
+ * Enhanced RequestCriteria for Apiato v.13
+ * Includes HashId support using vinkla/hashids + performance improvements
  */
 class RequestCriteria implements CriteriaInterface
 {
@@ -31,10 +31,11 @@ class RequestCriteria implements CriteriaInterface
 
         // Apply relationships
         if ($with) {
+            $with = is_string($with) ? explode(',', $with) : $with;
             $model = $model->with($with);
         }
 
-        // Apply search
+        // Apply search with HashId support
         if ($search && is_array($fieldsSearchable) && count($fieldsSearchable)) {
             $searchFields = is_array($searchFields) || is_null($searchFields) ? $searchFields : explode(';', $searchFields);
             $fields = $this->parserFieldsSearch($fieldsSearchable, $searchFields);
@@ -52,24 +53,30 @@ class RequestCriteria implements CriteriaInterface
                     }
                     
                     $value = null;
-
                     $condition = trim(strtolower($condition));
 
                     if (isset($searchData[$field])) {
-                        $value = ($condition == "like" || $condition == "ilike") ? "%{$searchData[$field]}%" : $searchData[$field];
+                        $value = $searchData[$field];
                     } else {
                         if (!is_null($search) && !empty($search)) {
-                            $value = ($condition == "like" || $condition == "ilike") ? "%{$search}%" : $search;
+                            $value = $search;
                         }
                     }
 
                     if ($value) {
-                        // Enhanced: Handle HashId fields (Apiato enhancement)
-                        if (method_exists($repository, 'processIdValue') && $this->isHashIdField($field)) {
-                            $value = str_replace('%', '', $value); // Remove like wildcards for HashId processing
-                            $value = $repository->processIdValue($value);
+                        // Process HashIds for ID fields using Apiato's service
+                        if ($this->isIdField($field) && method_exists($repository, 'processIdValue') && config('repository.apiato.hashids.decode_search', true)) {
                             if ($condition == "like" || $condition == "ilike") {
+                                $value = str_replace('%', '', $value);
+                                $value = $repository->processIdValue($value);
                                 $condition = "="; // Change to exact match for HashIds
+                            } else {
+                                $value = $repository->processIdValue($value);
+                            }
+                        } else {
+                            // Apply like conditions for non-ID fields
+                            if ($condition == "like" || $condition == "ilike") {
+                                $value = "%{$value}%";
                             }
                         }
 
@@ -104,7 +111,7 @@ class RequestCriteria implements CriteriaInterface
             });
         }
 
-        // Apply filters
+        // Apply filters with HashId support
         if ($filter && is_array($fieldsSearchable) && count($fieldsSearchable)) {
             $fields = $this->parserFieldsSearch($fieldsSearchable, null);
             $filterData = $this->parserSearchData($filter);
@@ -116,8 +123,8 @@ class RequestCriteria implements CriteriaInterface
                         $condition = "=";
                     }
 
-                    // Enhanced: Handle HashId fields in filters (Apiato enhancement)
-                    if (method_exists($repository, 'processIdValue') && $this->isHashIdField($field)) {
+                    // Process HashIds for ID fields in filters
+                    if ($this->isIdField($field) && method_exists($repository, 'processIdValue') && config('repository.apiato.hashids.decode_filters', true)) {
                         $value = $repository->processIdValue($value);
                     }
 
@@ -141,6 +148,11 @@ class RequestCriteria implements CriteriaInterface
         }
 
         return $model;
+    }
+
+    protected function isIdField(string $field): bool
+    {
+        return $field === 'id' || str_ends_with($field, '_id');
     }
 
     protected function parserFieldsSearch(array $fields = [], array $searchFields = null)
@@ -193,10 +205,5 @@ class RequestCriteria implements CriteriaInterface
     protected function parserSearchValue($search)
     {
         return stripos($search, ';') || stripos($search, ':') ? null : $search;
-    }
-
-    protected function isHashIdField(string $field): bool
-    {
-        return str_ends_with($field, '_id') || $field === 'id';
     }
 }

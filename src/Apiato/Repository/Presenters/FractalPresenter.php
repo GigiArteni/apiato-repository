@@ -16,7 +16,7 @@ use League\Fractal\TransformerAbstract;
 use Apiato\Repository\Contracts\PresenterInterface;
 
 /**
- * Class FractalPresenter - 100% l5-repository compatible + enhancements
+ * Enhanced FractalPresenter for Apiato v.13
  */
 abstract class FractalPresenter implements PresenterInterface
 {
@@ -36,6 +36,9 @@ abstract class FractalPresenter implements PresenterInterface
         $this->setupSerializer();
     }
 
+    /**
+     * Setup serializer
+     */
     protected function setupSerializer(): static
     {
         $serializer = $this->serializer();
@@ -47,6 +50,9 @@ abstract class FractalPresenter implements PresenterInterface
         return $this;
     }
 
+    /**
+     * Parse includes from request
+     */
     protected function parseIncludes(): static
     {
         $request = app('Illuminate\Http\Request');
@@ -59,14 +65,23 @@ abstract class FractalPresenter implements PresenterInterface
         return $this;
     }
 
+    /**
+     * Get serializer instance
+     */
     public function serializer(): SerializerAbstract
     {
         $serializer = config('repository.fractal.serializer', 'League\\Fractal\\Serializer\\DataArraySerializer');
         return new $serializer();
     }
 
+    /**
+     * Get transformer instance (must be implemented by child classes)
+     */
     abstract public function getTransformer(): TransformerAbstract;
 
+    /**
+     * Present data
+     */
     public function present($data)
     {
         if (!class_exists('League\Fractal\Manager')) {
@@ -84,16 +99,25 @@ abstract class FractalPresenter implements PresenterInterface
         return $this->fractal->createData($this->resource)->toArray();
     }
 
+    /**
+     * Transform collection
+     */
     protected function transformCollection($data)
     {
         return new Collection($data, $this->getTransformer(), $this->resourceKeyCollection);
     }
 
+    /**
+     * Transform single item
+     */
     protected function transformItem($data)
     {
         return new Item($data, $this->getTransformer(), $this->resourceKeyItem);
     }
 
+    /**
+     * Transform paginated data
+     */
     protected function transformPaginator($paginator)
     {
         $collection = $paginator->getCollection();
@@ -104,5 +128,23 @@ abstract class FractalPresenter implements PresenterInterface
         }
 
         return $resource;
+    }
+
+    /**
+     * Set resource key for items
+     */
+    public function setResourceKeyItem(string $key)
+    {
+        $this->resourceKeyItem = $key;
+        return $this;
+    }
+
+    /**
+     * Set resource key for collections
+     */
+    public function setResourceKeyCollection(string $key)
+    {
+        $this->resourceKeyCollection = $key;
+        return $this;
     }
 }

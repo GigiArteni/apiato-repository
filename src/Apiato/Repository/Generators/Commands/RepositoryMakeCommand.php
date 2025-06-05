@@ -7,12 +7,12 @@ use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Str;
 
 /**
- * Repository generator command - 100% compatible with l5-repository
+ * Repository generator command for Apiato v.13
  */
 class RepositoryMakeCommand extends Command
 {
-    protected $signature = 'make:repository {name} {--fillable=} {--rules=} {--validator=} {--force}';
-    protected $description = 'Create a new repository class';
+    protected $signature = 'make:repository {name} {--model=} {--fillable=} {--rules=} {--validator=} {--presenter=} {--force}';
+    protected $description = 'Create a new repository class for Apiato v.13';
 
     protected Filesystem $files;
 
@@ -69,21 +69,33 @@ class RepositoryMakeCommand extends Command
 
     protected function buildClass($name)
     {
-        $modelName = Str::replaceLast('Repository', '', class_basename($name));
+        $modelName = $this->option('model') ?: Str::replaceLast('Repository', '', class_basename($name));
         $modelClass = "App\\Models\\{$modelName}";
 
+        $replacements = [
+            '{{CLASS}}' => class_basename($name),
+            '{{MODEL}}' => $modelName,
+            '{{MODEL_CLASS}}' => $modelClass,
+            '{{NAMESPACE}}' => $this->getNamespace($name),
+        ];
+
         return str_replace(
-            ['{{CLASS}}', '{{MODEL}}', '{{MODEL_CLASS}}'],
-            [class_basename($name), $modelName, $modelClass],
+            array_keys($replacements),
+            array_values($replacements),
             $this->getStub()
         );
+    }
+
+    protected function getNamespace($name)
+    {
+        return trim(implode('\\', array_slice(explode('\\', $name), 0, -1)), '\\');
     }
 
     protected function getStub()
     {
         return '<?php
 
-namespace App\Repositories;
+namespace {{NAMESPACE}};
 
 use Apiato\Repository\Eloquent\BaseRepository;
 use Apiato\Repository\Criteria\RequestCriteria;
@@ -91,7 +103,8 @@ use {{MODEL_CLASS}};
 
 /**
  * Class {{CLASS}}
- * @package App\Repositories
+ * Enhanced for Apiato v.13 with HashId support
+ * @package {{NAMESPACE}}
  */
 class {{CLASS}} extends BaseRepository
 {
@@ -105,11 +118,13 @@ class {{CLASS}} extends BaseRepository
 
     /**
      * Specify fields that are searchable
+     * HashId fields (id, *_id) are automatically processed
      */
     protected $fieldSearchable = [
         // Add your searchable fields here
         // \'name\' => \'like\',
         // \'email\' => \'=\',
+        // \'id\' => \'=\', // Automatically supports HashIds
     ];
 
     /**

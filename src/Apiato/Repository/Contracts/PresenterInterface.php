@@ -3,9 +3,16 @@
 namespace Apiato\Repository\Contracts;
 
 /**
- * 100% Compatible with l5-repository PresenterInterface
+ * Presenter Interface
+ * Defines the contract for data presentation
  */
 interface PresenterInterface
 {
+    /**
+     * Prepare data to present
+     *
+     * @param mixed $data
+     * @return mixed
+     */
     public function present($data);
 }

@@ -3,12 +3,12 @@
 namespace Apiato\Repository\Contracts;
 
 /**
- * 100% Compatible with l5-repository RepositoryInterface
- * Enhanced with performance improvements and HashId support
+ * Repository Interface - Enhanced for Apiato v.13
+ * Compatible with repository pattern + performance improvements
  */
 interface RepositoryInterface
 {
-    // Core l5-repository methods
+    // Core repository methods
     public function all($columns = ['*']);
     public function first($columns = ['*']);
     public function paginate($limit = null, $columns = ['*']);

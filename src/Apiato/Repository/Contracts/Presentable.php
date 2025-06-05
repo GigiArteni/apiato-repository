@@ -3,10 +3,23 @@
 namespace Apiato\Repository\Contracts;
 
 /**
- * 100% Compatible with l5-repository Presentable
+ * Presentable Interface
+ * Defines the contract for objects that can be presented
  */
 interface Presentable
 {
+    /**
+     * Set Presenter
+     *
+     * @param PresenterInterface $presenter
+     * @return mixed
+     */
     public function setPresenter(PresenterInterface $presenter);
+
+    /**
+     * Get Presenter
+     *
+     * @return mixed
+     */
     public function presenter();
 }

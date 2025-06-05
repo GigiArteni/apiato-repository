@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 
 class CriteriaMakeCommand extends Command
 {
-    protected $signature = 'make:criteria {name}';
+    protected $signature = 'make:criteria {name} {--force}';
     protected $description = 'Create a new criteria class';
 
     protected Filesystem $files;
@@ -29,7 +29,7 @@ class CriteriaMakeCommand extends Command
 
         $path = app_path('Criteria/' . $name . '.php');
 
-        if ($this->files->exists($path)) {
+        if ($this->files->exists($path) && !$this->option('force')) {
             $this->error('Criteria already exists!');
             return false;
         }
@@ -41,6 +41,7 @@ class CriteriaMakeCommand extends Command
         $this->files->put($path, $stub);
 
         $this->info('Criteria created successfully.');
+        $this->line("<info>Criteria:</info> {$path}");
 
         return true;
     }

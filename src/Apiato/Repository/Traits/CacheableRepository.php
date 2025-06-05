@@ -6,7 +6,8 @@ use Illuminate\Contracts\Cache\Repository as CacheRepository;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * Enhanced caching trait - compatible with l5-repository + performance improvements
+ * Enhanced caching trait for Apiato v.13
+ * Improved performance and intelligent cache invalidation
  */
 trait CacheableRepository
 {
@@ -14,28 +15,43 @@ trait CacheableRepository
     protected ?int $cacheMinutes = null;
     protected bool $skipCache = false;
 
+    /**
+     * Set Cache Repository
+     */
     public function setCacheRepository($repository)
     {
         $this->cacheRepository = $repository;
         return $this;
     }
 
+    /**
+     * Get Cache Repository
+     */
     public function getCacheRepository()
     {
         return $this->cacheRepository ?? Cache::store();
     }
 
+    /**
+     * Get Cache Minutes
+     */
     public function getCacheMinutes()
     {
         return $this->cacheMinutes ?? config('repository.cache.minutes', 30);
     }
 
+    /**
+     * Skip Cache
+     */
     public function skipCache($status = true)
     {
         $this->skipCache = $status;
         return $this;
     }
 
+    /**
+     * Check if method is allowed to be cached
+     */
     public function allowedCache($method)
     {
         $cacheEnabled = config('repository.cache.enabled', false);
@@ -62,6 +78,9 @@ trait CacheableRepository
         return false;
     }
 
+    /**
+     * Check if cache is skipped
+     */
     public function isSkippedCache()
     {
         $skipped = request()->get(config('repository.cache.params.skipCache', 'skipCache'), false);
@@ -72,6 +91,9 @@ trait CacheableRepository
         return $this->skipCache || $skipped;
     }
 
+    /**
+     * Serialize criteria for cache key
+     */
     protected function serializeCriteria()
     {
         try {
@@ -81,19 +103,97 @@ trait CacheableRepository
         }
     }
 
-    // Enhanced cache key generation with HashId support
+    /**
+     * Enhanced cache key generation
+     */
     public function getCacheKey($method, $args = null)
     {
         if (is_null($args)) {
             $args = [];
         }
 
-        $key = sprintf('%s@%s-%s',
+        $key = sprintf('%s@%s-%s-%s',
             get_called_class(),
             $method,
-            serialize($args)
+            serialize($args),
+            $this->serializeCriteria()
         );
 
-        return $key;
+        return hash('sha256', $key);
+    }
+
+    /**
+     * Get cached result or execute callback
+     */
+    protected function getCachedResult($method, $args, $callback)
+    {
+        if (!$this->allowedCache($method) || $this->isSkippedCache()) {
+            return $callback();
+        }
+
+        $key = $this->getCacheKey($method, $args);
+        $minutes = $this->getCacheMinutes();
+
+        return $this->getCacheRepository()->remember($key, $minutes, $callback);
+    }
+
+    /**
+     * Clear cache for this repository
+     */
+    public function clearCache()
+    {
+        if (config('repository.cache.enabled', false)) {
+            $pattern = get_called_class() . '@*';
+            
+            // For Redis cache
+            if (method_exists($this->getCacheRepository(), 'getRedis')) {
+                $redis = $this->getCacheRepository()->getRedis();
+                $keys = $redis->keys($pattern);
+                if (!empty($keys)) {
+                    $redis->del($keys);
+                }
+            } else {
+                // For file/array cache, we'll use tags if available
+                try {
+                    $this->getCacheRepository()->tags([get_called_class()])->flush();
+                } catch (\Exception $e) {
+                    // Cache driver doesn't support tags
+                }
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Forget specific cache key
+     */
+    public function forgetCache($method, $args = null)
+    {
+        if (config('repository.cache.enabled', false)) {
+            $key = $this->getCacheKey($method, $args);
+            $this->getCacheRepository()->forget($key);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Remember cache with tags (if supported)
+     */
+    protected function rememberWithTags($key, $minutes, $callback, $tags = [])
+    {
+        $cacheRepository = $this->getCacheRepository();
+        
+        if (empty($tags)) {
+            $tags = [get_called_class()];
+        }
+
+        try {
+            return $cacheRepository->tags($tags)->remember($key, $minutes, $callback);
+        } catch (\Exception $e) {
+            // Cache driver doesn't support tags, use regular remember
+            return $cacheRepository->remember($key, $minutes, $callback);
+        }
     }
 }

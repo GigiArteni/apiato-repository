@@ -5,13 +5,16 @@ namespace Apiato\Repository\Providers;
 use Illuminate\Support\ServiceProvider;
 
 /**
- * Repository Service Provider - 100% Compatible + Auto-registration
- * This provider automatically makes your existing l5-repository code work
+ * Repository Service Provider for Apiato v.13
+ * Registers all repository services and commands
  */
 class RepositoryServiceProvider extends ServiceProvider
 {
     protected bool $defer = false;
 
+    /**
+     * Boot the application services
+     */
     public function boot()
     {
         $this->publishes([
@@ -25,65 +28,94 @@ class RepositoryServiceProvider extends ServiceProvider
                 \Apiato\Repository\Generators\Commands\RepositoryMakeCommand::class,
                 \Apiato\Repository\Generators\Commands\CriteriaMakeCommand::class,
                 \Apiato\Repository\Generators\Commands\EntityMakeCommand::class,
+                \Apiato\Repository\Generators\Commands\PresenterMakeCommand::class,
+                \Apiato\Repository\Generators\Commands\ValidatorMakeCommand::class,
+                \Apiato\Repository\Generators\Commands\TransformerMakeCommand::class,
             ]);
         }
-    }
 
-    public function register()
-    {
-        // Register core services
-        $this->app->register(\Apiato\Repository\Providers\EventServiceProvider::class);
-
-        // CRITICAL: Create aliases so existing Apiato code works unchanged
-        $this->createCompatibilityLayer();
+        // Auto-detect Apiato v.13 environment
+        $this->detectApiatoEnvironment();
     }
 
     /**
-     * Create compatibility layer for existing l5-repository code
-     * This makes your existing Apiato repositories work without any changes
+     * Register the application services
      */
-    protected function createCompatibilityLayer()
+    public function register()
     {
-        // Map old l5-repository classes to new Apiato classes
-        $aliases = [
-            // Core interfaces
-            'Prettus\Repository\Contracts\RepositoryInterface' => 'Apiato\Repository\Contracts\RepositoryInterface',
-            'Prettus\Repository\Contracts\CriteriaInterface' => 'Apiato\Repository\Contracts\CriteriaInterface',
-            'Prettus\Repository\Contracts\PresenterInterface' => 'Apiato\Repository\Contracts\PresenterInterface',
-            'Prettus\Repository\Contracts\Presentable' => 'Apiato\Repository\Contracts\Presentable',
-            'Prettus\Repository\Contracts\CacheableInterface' => 'Apiato\Repository\Contracts\CacheableInterface',
-            'Prettus\Repository\Contracts\RepositoryCriteriaInterface' => 'Apiato\Repository\Contracts\RepositoryCriteriaInterface',
-            
-            // Core classes
-            'Prettus\Repository\Eloquent\BaseRepository' => 'Apiato\Repository\Eloquent\BaseRepository',
-            'Prettus\Repository\Criteria\RequestCriteria' => 'Apiato\Repository\Criteria\RequestCriteria',
-            'Prettus\Repository\Presenter\FractalPresenter' => 'Apiato\Repository\Presenters\FractalPresenter',
-            
-            // Traits
-            'Prettus\Repository\Traits\CacheableRepository' => 'Apiato\Repository\Traits\CacheableRepository',
-            'Prettus\Repository\Traits\PresentableTrait' => 'Apiato\Repository\Traits\PresentableTrait',
-            
-            // Events
-            'Prettus\Repository\Events\RepositoryEntityCreating' => 'Apiato\Repository\Events\RepositoryEntityCreating',
-            'Prettus\Repository\Events\RepositoryEntityCreated' => 'Apiato\Repository\Events\RepositoryEntityCreated',
-            'Prettus\Repository\Events\RepositoryEntityUpdating' => 'Apiato\Repository\Events\RepositoryEntityUpdating',
-            'Prettus\Repository\Events\RepositoryEntityUpdated' => 'Apiato\Repository\Events\RepositoryEntityUpdated',
-            'Prettus\Repository\Events\RepositoryEntityDeleting' => 'Apiato\Repository\Events\RepositoryEntityDeleting',
-            'Prettus\Repository\Events\RepositoryEntityDeleted' => 'Apiato\Repository\Events\RepositoryEntityDeleted',
-            
-            // Exceptions
-            'Prettus\Repository\Exceptions\RepositoryException' => 'Apiato\Repository\Exceptions\RepositoryException',
-        ];
+        $this->app->register(\Apiato\Repository\Providers\EventServiceProvider::class);
+        
+        // Register core services
+        $this->registerRepositoryServices();
+        
+        // Register validators
+        $this->registerValidators();
+    }
 
-        foreach ($aliases as $original => $new) {
-            if (!class_exists($original) && class_exists($new)) {
-                class_alias($new, $original);
+    /**
+     * Detect Apiato v.13 environment and configure accordingly
+     */
+    protected function detectApiatoEnvironment()
+    {
+        // Check if we're in an Apiato project
+        if ($this->isApiatoProject()) {
+            // Ensure HashIds are enabled by default in Apiato projects
+            if (!config()->has('repository.apiato.hashids.enabled')) {
+                config(['repository.apiato.hashids.enabled' => true]);
+            }
+
+            // Log successful integration
+            if (config('app.debug')) {
+                logger('Apiato Repository: Successfully integrated with Apiato v.13 project');
             }
         }
     }
 
+    /**
+     * Check if this is an Apiato project
+     */
+    protected function isApiatoProject(): bool
+    {
+        return class_exists('App\Ship\Engine\Foundation\Facades\Apiato') || 
+               file_exists(base_path('app/Ship')) ||
+               file_exists(base_path('app/Containers'));
+    }
+
+    /**
+     * Register repository services
+     */
+    protected function registerRepositoryServices()
+    {
+        // Register default validator
+        $this->app->bind(
+            \Apiato\Repository\Contracts\ValidatorInterface::class,
+            \Apiato\Repository\Validators\LaravelValidator::class
+        );
+
+        // Register cache manager
+        $this->app->singleton('repository.cache', function ($app) {
+            return $app['cache'];
+        });
+    }
+
+    /**
+     * Register validators
+     */
+    protected function registerValidators()
+    {
+        $this->app->bind('validator.repository', function ($app) {
+            return new \Apiato\Repository\Validators\LaravelValidator();
+        });
+    }
+
+    /**
+     * Get the services provided by the provider
+     */
     public function provides()
     {
-        return [];
+        return [
+            'repository.cache',
+            'validator.repository',
+        ];
     }
 }

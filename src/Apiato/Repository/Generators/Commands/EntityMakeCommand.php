@@ -5,13 +5,13 @@ namespace Apiato\Repository\Generators\Commands;
 use Illuminate\Console\Command;
 
 /**
- * Entity generator command (l5-repository compatibility)
- * This creates the complete stack: Model, Repository, Presenter, etc.
+ * Entity generator command for Apiato v.13
+ * Creates the complete stack: Model, Repository, etc.
  */
 class EntityMakeCommand extends Command
 {
-    protected $signature = 'make:entity {name} {--fillable=} {--rules=} {--validator=} {--force}';
-    protected $description = 'Create a new entity (Model, Repository, Presenter, etc.)';
+    protected $signature = 'make:entity {name} {--fillable=} {--rules=} {--validator=} {--presenter=} {--force}';
+    protected $description = 'Create a new entity (Model, Repository, etc.) for Apiato v.13';
 
     public function handle()
     {
@@ -25,10 +25,32 @@ class EntityMakeCommand extends Command
         // Generate repository
         $this->call('make:repository', [
             'name' => $name . 'Repository',
+            '--model' => $name,
             '--force' => $this->option('force')
         ]);
 
+        // Generate presenter if requested
+        if ($this->option('presenter')) {
+            $this->call('make:presenter', [
+                'name' => $name . 'Presenter',
+                '--force' => $this->option('force')
+            ]);
+        }
+
+        // Generate validator if requested
+        if ($this->option('validator')) {
+            $this->call('make:validator', [
+                'name' => $name . 'Validator',
+                '--rules' => $this->option('rules'),
+                '--force' => $this->option('force')
+            ]);
+        }
+
         $this->info('Entity created successfully!');
+        $this->line("<info>Generated:</info> Model, Repository" . 
+                   ($this->option('presenter') ? ', Presenter' : '') .
+                   ($this->option('validator') ? ', Validator' : ''));
+
         return true;
     }
 }
