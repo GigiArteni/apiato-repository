@@ -23,7 +23,448 @@ Apiato Repository is a high-performance repository pattern implementation specif
 ### 📊 Performance Benchmarks
 
 | Operation | Before | After | Improvement |
-|-----------|--------|-------|-------------|
+|---
+
+## 🧠 Enhanced Search Features
+
+The package includes powerful **Enhanced Search** capabilities that go beyond basic LIKE queries, providing intelligent search with relevance scoring, boolean operators, and fuzzy matching.
+
+### 🎯 **Enabling Enhanced Search**
+
+Enhanced search is **enabled by default** but can be controlled via configuration:
+
+```env
+# Enable enhanced search globally
+REPOSITORY_ENHANCED_SEARCH=true
+
+# Disable enhanced search (falls back to basic search)
+REPOSITORY_ENHANCED_SEARCH=false
+```
+
+### ⚙️ **How Enhanced Search Works**
+
+Enhanced search **automatically activates** when it detects:
+- ✅ **Quoted phrases**: `"senior developer"`
+- ✅ **Boolean operators**: `+required -excluded`
+- ✅ **Fuzzy operators**: `john~2`
+- ✅ **Multi-word searches**: `john smith engineer`
+
+For simple field-specific searches, it uses **basic search** for better performance.
+
+### 🔍 **Enhanced Search Patterns**
+
+#### Exact Phrase Search
+```bash
+# Find exact phrases
+GET /api/users?search="senior developer"
+GET /api/products?search="gaming laptop"
+GET /api/tickets?search="login issue"
+
+# Phrases with HashIds
+GET /api/users?search="project manager";role_id:abc123
+```
+
+#### Boolean Operators
+```bash
+# Required terms (must have ALL)
+GET /api/users?search=+engineer +senior +laravel
+# Must contain: engineer AND senior AND laravel
+
+# Excluded terms (must NOT have)
+GET /api/users?search=developer -intern -freelance
+# Contains "developer" but NOT "intern" or "freelance"
+
+# Combined boolean logic
+GET /api/users?search=+developer +senior -intern +active
+# Must have: developer AND senior AND active, but NOT intern
+
+# With HashIds
+GET /api/users?search=+engineer +senior;company_id:abc123
+```
+
+#### Fuzzy Search (Phonetic Matching)
+```bash
+# Fuzzy matching with distance
+GET /api/users?search=john~2
+# Finds: "John", "Jon", "Joan", "Johnny" (phonetically similar)
+
+# Fuzzy with other terms
+GET /api/users?search=smith~1 +engineer
+# Fuzzy match "smith" AND must contain "engineer"
+
+# Fuzzy with relationships
+GET /api/users?search=developer~2;company.name:tech
+```
+
+#### Smart Multi-Word Search
+```bash
+# Intelligent cross-field search
+GET /api/users?search=john smith engineer
+# Searches across name, email, bio, title for best combination
+
+# With relevance ranking
+GET /api/users?search=react native developer&orderBy=relevance_score&sortedBy=desc
+```
+
+### 📊 **Relevance Scoring**
+
+Enhanced search automatically adds **relevance scoring** to rank results by match quality:
+
+```bash
+# Results include relevance_score and are auto-sorted
+GET /api/users?search="senior developer" +react
+```
+
+**Scoring Logic:**
+- **Exact phrases**: 10 points
+- **Required terms**: 5 points  
+- **Optional terms**: 3 points
+- **Fuzzy matches**: 2 points
+
+```json
+{
+  "data": [
+    {
+      "id": "abc123",
+      "name": "John Smith",
+      "title": "Senior Developer",
+      "relevance_score": 15,  // Exact phrase + required term
+      "..."
+    },
+    {
+      "id": "def456", 
+      "name": "Jane Doe",
+      "bio": "React developer with senior experience",
+      "relevance_score": 8,   // Required term + optional matches
+      "..."
+    }
+  ]
+}
+```
+
+### 🎮 **Force Enhanced Search**
+
+You can force enhanced search on/off per request:
+
+```bash
+# Force enhanced search (even if globally disabled)
+GET /api/users?search="john smith"&enhanced=true
+
+# Force basic search (even if globally enabled)  
+GET /api/users?search=name:john&enhanced=false
+```
+
+### 🏗️ **Repository Configuration for Enhanced Search**
+
+Configure searchable fields to work optimally with enhanced search:
+
+```php
+<?php
+
+namespace App\Repositories;
+
+use Apiato\Repository\Eloquent\BaseRepository;
+
+class UserRepository extends BaseRepository
+{
+    protected $fieldSearchable = [
+        // Primary search fields (high relevance)
+        'name' => 'like',
+        'email' => 'like', 
+        'title' => 'like',
+        
+        // Secondary fields (medium relevance)
+        'bio' => 'like',
+        'skills' => 'like',
+        'description' => 'like',
+        
+        // Relationship fields (enhanced search supports these)
+        'company.name' => 'like',
+        'posts.title' => 'like',
+        'roles.name' => 'like',
+        
+        // ID fields (HashIds auto-decoded)
+        'id' => '=',
+        'company_id' => '=',
+        'role_id' => '=',
+    ];
+    
+    public function boot()
+    {
+        $this->pushCriteria(app(RequestCriteria::class));
+    }
+}
+```
+
+### 🎯 **Real-World Enhanced Search Examples**
+
+#### E-commerce Product Search
+```bash
+# Smart product discovery
+GET /api/products?search="gaming laptop" +nvidia +16gb -refurbished
+# Finds: Exact phrase "gaming laptop" + must have nvidia + must have 16gb + exclude refurbished
+
+# With categories and price filters
+GET /api/products?search="wireless headphones" +bluetooth;category_id:abc123;price:<=:200
+
+# Fuzzy brand search
+GET /api/products?search=apple~1 +iphone +128gb
+# Handles misspellings: "aple", "appel", etc.
+```
+
+#### HR Talent Search  
+```bash
+# Find ideal candidates
+GET /api/candidates?search=+developer +"react native" +senior -intern
+# Must be developer + exact phrase "react native" + senior level + not intern
+
+# Skills-based search with experience
+GET /api/candidates?search="full stack" +javascript +python;experience_years:>=:5
+
+# Location-based talent search
+GET /api/candidates?search=+developer +"remote ok";location.city:london
+```
+
+#### Customer Support Tickets
+```bash
+# Priority issue search
+GET /api/tickets?search="login error" +urgent -resolved;customer_id:abc123
+# Exact phrase "login error" + urgent priority + not resolved + specific customer
+
+# Knowledge base search
+GET /api/articles?search=password reset +email -deprecated
+# Articles about password reset + mentioning email + not deprecated
+
+# Escalation search
+GET /api/tickets?search=+billing +"payment failed" +escalated;assigned_to:def456
+```
+
+#### Content Management
+```bash
+# Blog post discovery
+GET /api/posts?search="laravel tutorial" +beginner +2024;status:published
+# Exact phrase + beginner level + current year + published only
+
+# Multi-author content
+GET /api/posts?search=+javascript +vue;authors.name:"John Smith"
+# JavaScript + Vue content by specific author
+
+# SEO content search  
+GET /api/posts?search=+seo +"search engine" -outdated;category_id:ghi789
+```
+
+### 💻 **Frontend Integration**
+
+#### React/Vue Component Example
+```javascript
+// Enhanced search hook
+const useEnhancedSearch = () => {
+  const buildSearchQuery = (searchConfig) => {
+    const { 
+      phrase,           // "exact phrase"
+      required = [],    // +required terms
+      excluded = [],    // -excluded terms  
+      fuzzy = [],       // fuzzy~2 terms
+      filters = {},     // additional filters
+      enhanced = true   // force enhanced search
+    } = searchConfig;
+    
+    let searchTerms = [];
+    
+    // Add exact phrase
+    if (phrase) {
+      searchTerms.push(`"${phrase}"`);
+    }
+    
+    // Add required terms
+    required.forEach(term => {
+      searchTerms.push(`+${term}`);
+    });
+    
+    // Add excluded terms
+    excluded.forEach(term => {
+      searchTerms.push(`-${term}`);
+    });
+    
+    // Add fuzzy terms
+    fuzzy.forEach(({ term, distance = 2 }) => {
+      searchTerms.push(`${term}~${distance}`);
+    });
+    
+    const params = new URLSearchParams();
+    
+    if (searchTerms.length) {
+      params.set('search', searchTerms.join(' '));
+    }
+    
+    // Add filters
+    Object.entries(filters).forEach(([key, value]) => {
+      if (key === 'search') return; // Skip to avoid conflicts
+      params.set(key, value);
+    });
+    
+    if (enhanced) {
+      params.set('enhanced', 'true');
+    }
+    
+    return params.toString();
+  };
+  
+  return { buildSearchQuery };
+};
+
+// Usage in component
+const ProductSearch = () => {
+  const { buildSearchQuery } = useEnhancedSearch();
+  
+  const handleSearch = () => {
+    const query = buildSearchQuery({
+      phrase: "gaming laptop",
+      required: ["nvidia", "16gb"],
+      excluded: ["refurbished"],
+      fuzzy: [{ term: "asus", distance: 1 }],
+      filters: {
+        'category_id': 'abc123',
+        'price': '<=:1500',
+        'with': 'reviews,specifications'
+      }
+    });
+    
+    // query = search="gaming laptop" +nvidia +16gb -refurbished asus~1&category_id=abc123&price=<=:1500&with=reviews,specifications&enhanced=true
+    
+    fetch(`/api/products?${query}`)
+      .then(response => response.json())
+      .then(data => {
+        // Results include relevance_score and are ranked by relevance
+        console.log('Search results:', data);
+      });
+  };
+};
+```
+
+#### Search Form Builder
+```javascript
+// Advanced search form component
+const AdvancedSearchForm = ({ onSearch }) => {
+  const [searchConfig, setSearchConfig] = useState({
+    phrase: '',
+    required: [],
+    excluded: [],
+    fuzzy: [],
+    enhanced: true
+  });
+  
+  const addRequiredTerm = (term) => {
+    setSearchConfig(prev => ({
+      ...prev,
+      required: [...prev.required, term]
+    }));
+  };
+  
+  const addExcludedTerm = (term) => {
+    setSearchConfig(prev => ({
+      ...prev,
+      excluded: [...prev.excluded, term]
+    }));
+  };
+  
+  const handleSubmit = () => {
+    const { buildSearchQuery } = useEnhancedSearch();
+    const query = buildSearchQuery(searchConfig);
+    onSearch(query);
+  };
+  
+  return (
+    <form onSubmit={handleSubmit}>
+      <input 
+        placeholder="Exact phrase (quotes added automatically)"
+        value={searchConfig.phrase}
+        onChange={(e) => setSearchConfig(prev => ({...prev, phrase: e.target.value}))}
+      />
+      
+      <TagInput 
+        label="Must include these terms"
+        tags={searchConfig.required}
+        onAdd={addRequiredTerm}
+        placeholder="Required terms (+)"
+      />
+      
+      <TagInput 
+        label="Must exclude these terms" 
+        tags={searchConfig.excluded}
+        onAdd={addExcludedTerm}
+        placeholder="Excluded terms (-)"
+      />
+      
+      <button type="submit">Search</button>
+    </form>
+  );
+};
+```
+
+### 🔧 **Configuration Reference**
+
+#### Enhanced Search Settings
+```php
+// config/repository.php
+'apiato' => [
+    'features' => [
+        'enhanced_search' => env('REPOSITORY_ENHANCED_SEARCH', true),
+        'auto_cache_tags' => env('REPOSITORY_AUTO_CACHE_TAGS', true),
+        'smart_relationships' => env('REPOSITORY_SMART_RELATIONSHIPS', true),
+        'event_dispatching' => env('REPOSITORY_EVENT_DISPATCHING', true),
+    ],
+    'search' => [
+        'fuzzy_enabled' => env('REPOSITORY_FUZZY_SEARCH', true),
+        'relevance_scoring' => env('REPOSITORY_RELEVANCE_SCORING', true),
+        'max_search_terms' => env('REPOSITORY_MAX_SEARCH_TERMS', 50),
+        'phrase_boost' => env('REPOSITORY_PHRASE_BOOST', 10),
+        'required_boost' => env('REPOSITORY_REQUIRED_BOOST', 5),
+    ]
+],
+```
+
+#### Environment Variables
+```env
+# Enhanced Search Features
+REPOSITORY_ENHANCED_SEARCH=true
+REPOSITORY_FUZZY_SEARCH=true  
+REPOSITORY_RELEVANCE_SCORING=true
+REPOSITORY_MAX_SEARCH_TERMS=50
+REPOSITORY_PHRASE_BOOST=10
+REPOSITORY_REQUIRED_BOOST=5
+```
+
+### ⚡ **Performance Considerations**
+
+#### When Enhanced Search Activates
+- ✅ **Auto-detects** when enhanced features are needed
+- ✅ **Falls back** to basic search for simple queries
+- ✅ **Relevance scoring** only when multiple terms
+- ✅ **Fuzzy search** only when explicitly requested
+
+#### Optimization Tips
+```php
+// Optimize searchable fields for enhanced search
+protected $fieldSearchable = [
+    // Put most important fields first (higher relevance)
+    'name' => 'like',        // Primary field
+    'title' => 'like',       // Secondary field  
+    'bio' => 'like',         // Tertiary field
+    
+    // Limit relationship depth for performance
+    'company.name' => 'like',           // ✅ Good
+    'company.projects.name' => 'like',  // ⚠️ Can be slow with large datasets
+];
+
+// Use caching for complex enhanced searches
+$results = $repository
+    ->remember(30) // Cache for 30 minutes
+    ->pushCriteria(app(RequestCriteria::class))
+    ->paginate(25);
+```
+
+-----------|--------|-------|-------------|
 | Basic Find | 45ms | 28ms | **38% faster** |
 | HashId Operations | 15ms | 3ms | **80% faster** |
 | Search + Filter | 95ms | 52ms | **45% faster** |
