@@ -140,4 +140,72 @@ return [
             'log_performance' => env('REPOSITORY_LOG_PERFORMANCE', false),
         ]
     ],
+    /*
+    |--------------------------------------------------------------------------
+    | Security & Sanitization Settings
+    |--------------------------------------------------------------------------
+    | Integrate with Apiato's sanitizeInput() for secure data handling
+    */
+    'security' => [
+        'sanitize_input' => env('REPOSITORY_SANITIZE_INPUT', true),
+        'sanitize_on' => [
+            'create' => env('REPOSITORY_SANITIZE_CREATE', true),
+            'update' => env('REPOSITORY_SANITIZE_UPDATE', true), 
+            'updateOrCreate' => env('REPOSITORY_SANITIZE_UPSERT', true),
+            'bulk_operations' => env('REPOSITORY_SANITIZE_BULK', true),
+        ],
+        'sanitize_fields' => [
+            'exclude' => ['password', 'password_confirmation', 'token'], // Never sanitize these
+            'html_fields' => ['description', 'bio', 'content'], // HTML purify these
+            'email_fields' => ['email', 'contact_email'], // Email sanitization
+        ],
+        'fallback_sanitization' => env('REPOSITORY_FALLBACK_SANITIZE', true), // For non-Apiato projects
+        'audit_sanitization' => env('REPOSITORY_AUDIT_SANITIZE', false), // Log sanitization changes
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Database Transaction Settings  
+    |--------------------------------------------------------------------------
+    | Smart transaction handling for data integrity
+    */
+    'transactions' => [
+        'auto_wrap_bulk' => env('REPOSITORY_AUTO_TRANSACTION_BULK', true), // Auto-wrap bulk operations
+        'auto_wrap_single' => env('REPOSITORY_AUTO_TRANSACTION_SINGLE', false), // Manual control for single ops
+        'timeout' => env('REPOSITORY_TRANSACTION_TIMEOUT', 30), // Transaction timeout in seconds
+        'isolation_level' => env('REPOSITORY_ISOLATION_LEVEL', null), // READ_COMMITTED, SERIALIZABLE, etc.
+        'retry_deadlocks' => env('REPOSITORY_RETRY_DEADLOCKS', true), // Auto-retry on deadlock
+        'max_retries' => env('REPOSITORY_MAX_RETRIES', 3),
+        'retry_delay' => env('REPOSITORY_RETRY_DELAY', 100), // milliseconds
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Advanced Bulk Operations
+    |--------------------------------------------------------------------------
+    | Enhanced bulk operations with sanitization and transactions
+    */
+    'bulk_operations' => [
+        'enabled' => env('REPOSITORY_BULK_OPERATIONS', true),
+        'chunk_size' => env('REPOSITORY_BULK_CHUNK_SIZE', 1000), // Process in chunks
+        'use_transactions' => env('REPOSITORY_BULK_TRANSACTIONS', true),
+        'sanitize_data' => env('REPOSITORY_BULK_SANITIZE', true),
+        'validate_hashids' => env('REPOSITORY_BULK_VALIDATE_HASHIDS', true),
+        'log_performance' => env('REPOSITORY_BULK_LOG_PERFORMANCE', false),
+    ],
+    /*
+    |--------------------------------------------------------------------------
+    | Repository Middleware
+    |--------------------------------------------------------------------------
+    */
+    'middleware' => [
+        'default_stack' => ['audit', 'cache:30'],
+        'available' => [
+            'audit' => AuditMiddleware::class,
+            'cache' => CacheMiddleware::class,
+            'rate-limit' => RateLimitMiddleware::class,
+            'tenant-scope' => TenantScopeMiddleware::class,
+            'performance' => PerformanceMonitorMiddleware::class,
+        ]
+    ],
 ];

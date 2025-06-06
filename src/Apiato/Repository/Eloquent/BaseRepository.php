@@ -32,6 +32,16 @@ use Apiato\Repository\Traits\CacheableRepository;
 abstract class BaseRepository implements RepositoryInterface, CacheableInterface, Presentable, RepositoryCriteriaInterface
 {
     use CacheableRepository;
+    use SanitizableRepository;
+    use TransactionalRepository;
+    use BulkOperations;
+    use HasMiddleware {
+        HasMiddleware::all as middlewareAll;
+        HasMiddleware::find as middlewareFind;
+        HasMiddleware::create as middlewareCreate;
+        HasMiddleware::update as middlewareUpdate;
+        HasMiddleware::delete as middlewareDelete;
+    } 
 
     protected Application $app;
     protected Model $model;
