@@ -23,7 +23,14 @@ Apiato Repository is a high-performance repository pattern implementation specif
 ### 📊 Performance Benchmarks
 
 | Operation | Before | After | Improvement |
-|---
+|-----------|--------|-------|-------------|
+| Basic Find | 45ms | 28ms | **38% faster** |
+| HashId Operations | 15ms | 3ms | **80% faster** |
+| Search + Filter | 95ms | 52ms | **45% faster** |
+| With Relations | 120ms | 65ms | **46% faster** |
+| API Response | 185ms | 105ms | **43% faster** |
+
+---
 
 ## 🧠 Enhanced Search Features
 
@@ -463,15 +470,6 @@ $results = $repository
     ->pushCriteria(app(RequestCriteria::class))
     ->paginate(25);
 ```
-
------------|--------|-------|-------------|
-| Basic Find | 45ms | 28ms | **38% faster** |
-| HashId Operations | 15ms | 3ms | **80% faster** |
-| Search + Filter | 95ms | 52ms | **45% faster** |
-| With Relations | 120ms | 65ms | **46% faster** |
-| API Response | 185ms | 105ms | **43% faster** |
-
----
 
 ## 📋 Requirements
 
