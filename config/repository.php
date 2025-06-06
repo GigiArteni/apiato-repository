@@ -1,5 +1,11 @@
 <?php
 
+use Apiato\Repository\Middleware\AuditMiddleware;
+use Apiato\Repository\Middleware\CacheMiddleware;
+use Apiato\Repository\Middleware\PerformanceMonitorMiddleware;
+use Apiato\Repository\Middleware\RateLimitMiddleware;
+use Apiato\Repository\Middleware\TenantScopeMiddleware;
+
 return [
     /*
     |--------------------------------------------------------------------------

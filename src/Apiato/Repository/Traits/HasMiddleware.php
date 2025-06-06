@@ -4,6 +4,12 @@ namespace Apiato\Repository\Traits;
 
 use Closure;
 use Apiato\Repository\Contracts\RepositoryInterface;
+use Apiato\Repository\Middleware\AuditMiddleware;
+use Apiato\Repository\Middleware\CacheMiddleware;
+use Apiato\Repository\Middleware\PerformanceMonitorMiddleware;
+use Apiato\Repository\Middleware\RateLimitMiddleware;
+use Apiato\Repository\Middleware\RepositoryMiddleware;
+use Apiato\Repository\Middleware\TenantScopeMiddleware;
 
 /**
  * Repository Middleware Manager

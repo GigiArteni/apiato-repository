@@ -2,6 +2,8 @@
 
 namespace Apiato\Repository\Events;
 
+use Apiato\Repository\Contracts\RepositoryInterface;
+
 /**
  * Data Sanitized Event
  * 

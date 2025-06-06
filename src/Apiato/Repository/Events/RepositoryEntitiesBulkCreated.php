@@ -2,6 +2,8 @@
 
 namespace Apiato\Repository\Events;
 
+use Apiato\Repository\Contracts\RepositoryInterface;
+
 /**
  * Repository Entities Bulk Created Event
  * Fired after multiple entities are created in bulk

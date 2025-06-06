@@ -23,7 +23,11 @@ use Apiato\Repository\Events\RepositoryEntityDeleting;
 use Apiato\Repository\Events\RepositoryEntityUpdated;
 use Apiato\Repository\Events\RepositoryEntityUpdating;
 use Apiato\Repository\Exceptions\RepositoryException;
+use Apiato\Repository\Traits\BulkOperations;
 use Apiato\Repository\Traits\CacheableRepository;
+use Apiato\Repository\Traits\HasMiddleware;
+use Apiato\Repository\Traits\SanitizableRepository;
+use Apiato\Repository\Traits\TransactionalRepository;
 
 /**
  * Enhanced BaseRepository for Apiato v.13
@@ -621,7 +625,7 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
 
     protected function parserResult($result)
     {
-        if ($result instanceof \Illuminate\Database\Eloquent\Collection || $result instanceof LengthAwarePaginator) {
+        if ($result instanceof \Illuminate\Database\Eloquent\Collection || $result instanceof LengthAwarePaginator) {  
             if ($result instanceof LengthAwarePaginator) {
                 $result->getCollection()->each(function ($model) {
                     if ($model instanceof Model) {
@@ -634,7 +638,7 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
                         $this->applyFieldVisibility($model);
                     }
                 });
-            }
+            }        
         } elseif ($result instanceof Model) {
             $this->applyFieldVisibility($result);
         }

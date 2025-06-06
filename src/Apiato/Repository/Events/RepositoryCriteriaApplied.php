@@ -3,6 +3,7 @@
 namespace Apiato\Repository\Events;
 
 use Apiato\Repository\Contracts\CriteriaInterface;
+use Apiato\Repository\Contracts\RepositoryInterface;
 
 /**
  * Repository Criteria Applied Event
