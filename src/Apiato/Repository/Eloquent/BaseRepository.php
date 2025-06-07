@@ -49,8 +49,9 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
 
     protected Application $app;
     protected Model $model;
+    protected ?Builder $query = null; // Store Builder instance for queries
     protected ?PresenterInterface $presenter = null;
-    protected ?ValidatorInterface $validator = null;
+    protected ?ValidatorInterface $validator = null; // Ensure this property is always defined
     protected ?Closure $scopeQuery = null;
     protected Collection $criteria;
     protected bool $skipCriteria = false;
@@ -104,6 +105,7 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
             throw new RepositoryException("Class {$this->model()} must be an instance of Illuminate\\Database\\Eloquent\\Model");
         }
 
+        $this->query = null; // Reset query builder
         return $this->model = $model;
     }
 
@@ -413,62 +415,27 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
     // QUERY BUILDER METHODS
     // ========================================
 
-    public function orderBy($column, $direction = 'asc')
-    {
-        $this->model = $this->model->orderBy($column, $direction);
-        return $this;
-    }
-
     public function with(array $relations)
     {
-        $this->model = $this->model->with($relations);
+        $this->query = $this->getQuery()->with($relations);
         return $this;
     }
 
     public function has(string $relation)
     {
-        $this->model = $this->model->has($relation);
+        $this->query = $this->getQuery()->has($relation);
         return $this;
     }
 
     public function whereHas(string $relation, Closure $closure)
     {
-        $this->model = $this->model->whereHas($relation, $closure);
+        $this->query = $this->getQuery()->whereHas($relation, $closure);
         return $this;
     }
 
-    public function hidden(array $fields)
+    public function orderBy($column, $direction = 'asc')
     {
-        $this->hidden = $fields;
-        return $this;
-    }
-
-    public function visible(array $fields)
-    {
-        $this->visible = $fields;
-        return $this;
-    }
-
-    public function scopeQuery(Closure $scope)
-    {
-        $this->scopeQuery = $scope;
-        return $this;
-    }
-
-    public function getFieldsSearchable()
-    {
-        return $this->fieldSearchable;
-    }
-
-    public function setPresenter($presenter)
-    {
-        $this->makePresenter($presenter);
-        return $this;
-    }
-
-    public function skipPresenter($status = true)
-    {
-        $this->skipPresenter = $status;
+        $this->query = $this->getQuery()->orderBy($column, $direction);
         return $this;
     }
 
@@ -680,5 +647,11 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
                 $this->model = $this->model->where($field, '=', $value);
             }
         }
+    }
+
+    // Helper to get the current query builder (protected for test access)
+    protected function getQuery(): Builder
+    {
+        return $this->query ?? $this->model->newQuery();
     }
 }

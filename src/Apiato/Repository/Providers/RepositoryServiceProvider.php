@@ -17,11 +17,16 @@ class RepositoryServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        // Robust config path resolution for local/dev and testbench/vendor environments
+        $rootConfig = dirname(__DIR__, 3) . '/config/repository.php';
+        $packageConfig = __DIR__ . '/../config/repository.php';
+        $configPath = file_exists($rootConfig) ? $rootConfig : $packageConfig;
+
         $this->publishes([
-            __DIR__ . '/../../../config/repository.php' => config_path('repository.php'),
+            $configPath => config_path('repository.php'),
         ], 'repository');
 
-        $this->mergeConfigFrom(__DIR__ . '/../../../config/repository.php', 'repository');
+        $this->mergeConfigFrom($configPath, 'repository');
 
         if ($this->app->runningInConsole()) {
             $this->commands([

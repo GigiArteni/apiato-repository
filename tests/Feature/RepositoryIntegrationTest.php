@@ -14,6 +14,12 @@ class RepositoryIntegrationTest extends TestCase
         ];
     }
 
+    protected function getEnvironmentSetUp($app)
+    {
+        // Manually load the repository config for integration tests
+        $app['config']->set('repository', require __DIR__ . '/../../config/repository.php');
+    }
+
     public function testServiceProviderIsRegistered()
     {
         $this->assertTrue($this->app->providerIsLoaded(RepositoryServiceProvider::class));

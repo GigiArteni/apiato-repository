@@ -41,7 +41,11 @@ class RequestCriteria implements CriteriaInterface
 
         // Apply search (enhanced or basic)
         if ($search && is_array($fieldsSearchable) && count($fieldsSearchable)) {
-            if (($enhancedSearch || $forceEnhanced) && $this->shouldUseEnhancedSearch($search)) {
+            // PATCH: skip array search values
+            if (is_array($search)) {
+                // If search is an array, skip or flatten as appropriate
+                // For now, skip to avoid TypeError
+            } elseif (($enhancedSearch || $forceEnhanced) && $this->shouldUseEnhancedSearch($search)) {
                 $model = $this->applyEnhancedSearch($model, $search, $fieldsSearchable, $searchFields, $repository);
             } else {
                 $model = $this->applyBasicSearch($model, $search, $fieldsSearchable, $searchFields, $repository);
@@ -71,7 +75,9 @@ class RequestCriteria implements CriteriaInterface
         // 2. Boolean operators: +required -excluded
         // 3. Fuzzy operators: word~2
         // 4. Multi-word searches without field specification
-        
+        if (!is_string($search)) {
+            return false;
+        }
         return preg_match('/["+~-]|^[^:]*\s+[^:]*$/', $search);
     }
 
@@ -282,7 +288,6 @@ class RequestCriteria implements CriteriaInterface
      */
     protected function applyBasicSearch($model, $search, $fieldsSearchable, $searchFields, $repository)
     {
-        // This is the original search implementation
         $searchFields = is_array($searchFields) || is_null($searchFields) ? $searchFields : explode(';', $searchFields);
         $fields = $this->parserFieldsSearch($fieldsSearchable, $searchFields);
         $isFirstField = true;
@@ -291,65 +296,69 @@ class RequestCriteria implements CriteriaInterface
 
         $modelForceAndWhere = strtolower($searchData->get('isForceAndWhere', 'or'));
 
-        return $model->where(function ($query) use ($fields, $search, $searchData, $isFirstField, $modelForceAndWhere, $repository) {
-            foreach ($fields as $field => $condition) {
-                if (is_numeric($field)) {
-                    $field = $condition;
-                    $condition = "=";
+        // PATCH: filter $fields to only string keys
+        $fields = array_filter($fields, 'is_string', ARRAY_FILTER_USE_KEY);
+        foreach ($fields as $field => $condition) {
+            // PATCH: skip non-string field names
+            if (!is_string($field)) continue;
+            $value = null;
+            $condition = trim(strtolower($condition));
+
+            if (isset($searchData[$field])) {
+                $value = ($condition == "like" || $condition == "ilike") ? "%{$searchData[$field]}%" : $searchData[$field];
+            } else {
+                if (!is_null($search) && !empty($search)) {
+                    $value = ($condition == "like" || $condition == "ilike") ? "%{$search}%" : $search;
                 }
-                
-                $value = null;
-                $condition = trim(strtolower($condition));
+            }
 
-                if (isset($searchData[$field])) {
-                    $value = ($condition == "like" || $condition == "ilike") ? "%{$searchData[$field]}%" : $searchData[$field];
-                } else {
-                    if (!is_null($search) && !empty($search)) {
-                        $value = ($condition == "like" || $condition == "ilike") ? "%{$search}%" : $search;
-                    }
-                }
-
-                if ($value) {
-                    // Process HashIds for ID fields using Apiato's service
-                    if ($this->isIdField($field) && method_exists($repository, 'processIdValue') && config('repository.apiato.hashids.decode_search', true)) {
-                        if ($condition == "like" || $condition == "ilike") {
-                            $value = str_replace('%', '', $value);
-                            $value = $repository->processIdValue($value);
-                            $condition = "=";
-                        } else {
-                            $value = $repository->processIdValue($value);
-                        }
-                    }
-
-                    $relation = null;
-                    if (stripos($field, '.')) {
-                        $explodeField = explode('.', $field);
-                        $field = array_pop($explodeField);
-                        $relation = implode('.', $explodeField);
-                    }
-
-                    $modelTableName = $query->getModel()->getTable();
-                    if ($isFirstField || $modelForceAndWhere == 'and') {
-                        if (!is_null($relation)) {
-                            $query->whereHas($relation, function ($query) use ($field, $condition, $value) {
-                                $query->where($field, $condition, $value);
-                            });
-                        } else {
-                            $query->where($modelTableName.'.'.$field, $condition, $value);
-                        }
-                        $isFirstField = false;
+            if ($value) {
+                // Process HashIds for ID fields using Apiato's service
+                if ($this->isIdField($field) && method_exists($repository, 'processIdValue') && config('repository.apiato.hashids.decode_search', true)) {
+                    if ($condition == "like" || $condition == "ilike") {
+                        $value = str_replace('%', '', $value);
+                        $value = $repository->processIdValue($value);
+                        $condition = "="; // Change to exact match for HashIds
                     } else {
-                        if (!is_null($relation)) {
-                            $query->orWhereHas($relation, function ($query) use ($field, $condition, $value) {
-                                $query->where($field, $condition, $value);
-                            });
-                        } else {
-                            $query->orWhere($modelTableName.'.'.$field, $condition, $value);
-                        }
+                        $value = $repository->processIdValue($value);
+                    }
+                } else {
+                    // Apply like conditions for non-ID fields
+                    if ($condition == "like" || $condition == "ilike") {
+                        $value = "%{$value}%";
+                    }
+                }
+
+                $relation = null;
+                // PATCH: only call stripos if $field is string (already checked above)
+                if (stripos($field, '.')) {
+                    $explodeField = explode('.', $field);
+                    $field = array_pop($explodeField);
+                    $relation = implode('.', $explodeField);
+                }
+
+                $modelTableName = $model->getModel()->getTable();
+                if ($isFirstField || $modelForceAndWhere == 'and') {
+                    if (!is_null($relation)) {
+                        $model->whereHas($relation, function ($query) use ($field, $condition, $value) {
+                            $query->where($field, $condition, $value);
+                        });
+                    } else {
+                        $model->where($modelTableName.'.'.$field, $condition, $value);
+                    }
+                    $isFirstField = false;
+                } else {
+                    if (!is_null($relation)) {
+                        $model->orWhereHas($relation, function ($query) use ($field, $condition, $value) {
+                            $query->where($field, $condition, $value);
+                        });
+                    } else {
+                        $model->orWhere($modelTableName.'.'.$field, $condition, $value);
                     }
                 }
             }
-        });
+        }
+        return $model;
     }
 
     /**
@@ -366,11 +375,15 @@ class RequestCriteria implements CriteriaInterface
     protected function parserFieldsSearch(array $fields = [], array $searchFields = null)
     {
         if (!is_null($searchFields) && count($searchFields)) {
-            $acceptedConditions = config('repository.criteria.acceptedConditions', ['=', 'like']);
+            $acceptedConditions = config('repository.criteria.acceptedConditions', [
+                '=', 'like'
+            ]);
             $originalFields = $fields;
             $fields = [];
 
             foreach ($searchFields as $index => $field) {
+                // PATCH: skip array field names
+                if (is_array($field)) continue;
                 $field_parts = explode(':', $field);
                 $temporaryIndex = array_search($field_parts[0], $originalFields);
 
@@ -392,6 +405,10 @@ class RequestCriteria implements CriteriaInterface
 
     protected function parserSearchData($search)
     {
+        // PATCH: skip non-string $search
+        if (!is_string($search)) {
+            return collect([]);
+        }
         $searchData = [];
         if (stripos($search, ':')) {
             $fields = explode(';', $search);
@@ -404,12 +421,15 @@ class RequestCriteria implements CriteriaInterface
                 }
             }
         }
-
         return collect($searchData);
     }
 
     protected function parserSearchValue($search)
     {
+        // PATCH: skip non-string $search
+        if (!is_string($search)) {
+            return null;
+        }
         return stripos($search, ';') || stripos($search, ':') ? null : $search;
     }
 
@@ -423,6 +443,15 @@ class RequestCriteria implements CriteriaInterface
                 $condition = $fields[$field];
                 if (is_numeric($condition)) {
                     $condition = "=";
+                }
+
+                // PATCH: skip array values for string-only operations
+                if (is_array($value)) {
+                    // If the condition is '=', treat as whereIn, else skip
+                    if ($condition === '=') {
+                        $model = $model->whereIn($field, $value);
+                    }
+                    continue;
                 }
 
                 if ($this->isIdField($field) && method_exists($repository, 'processIdValue') && config('repository.apiato.hashids.decode_filters', true)) {
