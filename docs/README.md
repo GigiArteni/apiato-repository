@@ -6,7 +6,15 @@ Welcome to the complete documentation for the **Apiato Repository** package. Thi
 
 ## 📚 Documentation Structure
 
+- [Feature Matrix & Capabilities](feature-matrix.md)
+- [Glossary](glossary.md)
+- [FAQ & Common Pitfalls](faq.md)
+- [Architecture & Diagrams](architecture.md)
+- [Community Resources](community-resources.md)
 - [Getting Started](guides/getting-started.md)
+- [Quick Start](getting-started/quick-start.md)
+- [Installation](getting-started/installation.md)
+- [Migration from l5-repository](getting-started/migration-from-l5.md)
 - [Basic Usage](guides/basic-usage.md)
 - [Advanced Features](guides/advanced-features.md)
 - [Caching & Performance](guides/caching-performance.md)
@@ -18,6 +26,18 @@ Welcome to the complete documentation for the **Apiato Repository** package. Thi
 - [Configuration Reference](reference/configuration.md)
 - [Events Reference](reference/events.md)
 - [Troubleshooting](reference/troubleshooting.md)
+- [Tutorials](#tutorials)
+- [Contributing](contributing/)
+
+### Tutorials
+- [Building a User Repository](tutorials/building-user-repository.md)
+- [Implementing Advanced Search](tutorials/implementing-search.md)
+- [Performance Optimization](tutorials/performance-optimization.md)
+- [Testing Repositories](tutorials/testing-repositories.md)
+- [Middleware & Cross-Cutting Concerns](tutorials/middleware.md)
+- [Bulk Operations & Smart Transactions](tutorials/bulk-operations.md)
+- [Security, Sanitization & Validation](tutorials/security-sanitization.md)
+- [API & Controller Integration](tutorials/api-integration.md)
 
 ---
 

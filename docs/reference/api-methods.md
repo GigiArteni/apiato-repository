@@ -258,6 +258,23 @@ $repo->withTransaction()->bulkUpdate([...], ['status'=>'pending']);
 
 ---
 
+# API Methods Reference
+
+## Cross-References
+
+- For real-world usage, see [Real-World Examples](../guides/real-world-examples.md) and [Building a User Repository](../tutorials/building-user-repository.md).
+- For advanced search, see [Enhanced Search Guide](../guides/enhanced-search.md) and [Implementing Search Tutorial](../tutorials/implementing-search.md).
+- For middleware, see [Middleware Guide](../tutorials/middleware.md).
+- For bulk operations and transactions, see [Bulk Operations Tutorial](../tutorials/bulk-operations.md).
+- For testing, see [Testing Repositories](../tutorials/testing-repositories.md).
+- For troubleshooting, see [Troubleshooting Reference](troubleshooting.md).
+
+---
+
+**Tip:** Use this reference as your single source of truth for all repository methods, then follow the links above for deep dives and real-world patterns.
+
+---
+
 **For more, see:**
 - [Guides](../guides/)
 - [Advanced Features](../guides/advanced-features.md)

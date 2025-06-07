@@ -100,6 +100,34 @@ GET /api/users?search=roles.name:admin;company.projects.status:active&filter=sta
 
 ---
 
+## 8. Multi-Model & Domain Examples
+
+- **Order Processing:**
+  ```php
+  $orders = $orderRepo->where('status', 'pending')
+      ->whereHas('customer', fn($q) => $q->where('vip', true))
+      ->with(['items.product', 'customer'])
+      ->get();
+  ```
+- **Product Inventory:**
+  ```php
+  $products = $productRepo->where('stock', '<', 10)
+      ->whereHas('supplier', fn($q) => $q->where('active', true))
+      ->get();
+  ```
+- **Multi-Tenancy (Company/Org):**
+  ```php
+  $users = $userRepo->middleware(['tenant-scope:company_id'])
+      ->where('role', 'manager')
+      ->get();
+  ```
+- **Cross-Entity Bulk Operations:**
+  ```php
+  $repo->bulkUpsert($data, ['external_id'], ['name', 'email', 'updated_at']);
+  ```
+
+---
+
 **Next:**
 - [API Reference →](../reference/api-methods.md)
 - [Building Your Own Repository →](../tutorials/building-user-repository.md)
