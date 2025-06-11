@@ -72,7 +72,7 @@ public function createUserWithProfile(Request $request)
 ## 5. Event-Driven Integrations
 
 ```php
-Event::listen(RepositoryEntityCreated::class, function($event) {
+Event::listen(RepositoryCreated::class, function($event) {
     NotificationService::send($event->getModel());
 });
 ```

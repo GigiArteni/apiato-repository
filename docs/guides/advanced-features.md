@@ -92,7 +92,7 @@ $repo->pushCriteria(new ActiveUsersCriteria());
 
 **Example:**
 ```php
-Event::listen(RepositoryEntityCreated::class, function($event) {
+Event::listen(RepositoryCreated::class, function($event) {
     // Log, notify, or audit
 });
 ```

@@ -23,10 +23,10 @@ php artisan make:criteria ActiveUsersCriteria
 
 ---
 
-## 3. Generate a Complete Entity
+## 3. Generate a Complete Model
 
 ```powershell
-php artisan make:entity User --presenter --validator
+php artisan make:model User --validator
 ```
 - Creates a model, repository, presenter, and validator in one step.
 

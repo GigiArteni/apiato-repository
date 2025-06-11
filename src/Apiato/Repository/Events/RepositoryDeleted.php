@@ -3,10 +3,10 @@
 namespace Apiato\Repository\Events;
 
 /**
- * Repository Entity Deleted Event
- * Fired after an entity is deleted
+ * Repository Deleted Event
+ * Fired after a model is deleted
  */
-class RepositoryEntityDeleted extends RepositoryEventBase
+class RepositoryDeleted extends RepositoryEventBase
 {
     protected string $action = "deleted";
 

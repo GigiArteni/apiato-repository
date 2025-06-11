@@ -24,7 +24,7 @@ A quick reference for important terms, concepts, and patterns used throughout th
 
 **Transformer**: A class that defines how a model or resource is converted to an array or JSON for APIs.
 
-**Event**: A signal that something happened in the repository (e.g., entity created, updated, deleted), which can trigger listeners.
+**Event**: A signal that something happened in the repository (e.g., model created, updated, deleted), which can trigger listeners.
 
 **Cache Tagging**: Associating cache entries with tags for fine-grained invalidation.
 

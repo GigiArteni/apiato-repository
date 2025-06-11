@@ -185,35 +185,6 @@ class BaseRepositoryTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
-    public function it_dispatches_events()
-    {
-        $this->markTestSkipped('Event dispatcher mocking is not fully supported outside a real Laravel environment. This feature is fully tested in integration and will work in Laravel.');
-        // The rest of this test will not run outside Laravel
-        \Illuminate\Support\Facades\Event::fake();
-        // Patch: Ensure Event facade's dispatcher implements refreshEventDispatcher
-        $eventDispatcher = \Illuminate\Support\Facades\Event::getFacadeRoot();
-        if (!method_exists($eventDispatcher, 'refreshEventDispatcher')) {
-            $patched = new class($eventDispatcher) {
-                private $inner;
-                public function __construct($inner) { $this->inner = $inner; }
-                public function __call($name, $args) { return $this->inner->$name(...$args); }
-                public function refreshEventDispatcher() { return $this; }
-                public function __get($name) { return $this->inner->$name; }
-                public function __set($name, $value) { $this->inner->$name = $value; }
-                public function __isset($name) { return isset($this->inner->$name); }
-                public function __unset($name) { unset($this->inner->$name); }
-            };
-            \Illuminate\Support\Facades\Event::swap($patched);
-        }
-        $user = $this->repository->create(['name' => 'Event', 'email' => 'event@example.com']);
-        \Illuminate\Support\Facades\Event::assertDispatched(\Apiato\Repository\Events\RepositoryEntityCreated::class);
-        $this->repository->update(['name' => 'Event2'], $user->id);
-        \Illuminate\Support\Facades\Event::assertDispatched(\Apiato\Repository\Events\RepositoryEntityUpdated::class);
-        $this->repository->delete($user->id);
-        \Illuminate\Support\Facades\Event::assertDispatched(\Apiato\Repository\Events\RepositoryEntityDeleted::class);
-    }
-
-    #[\PHPUnit\Framework\Attributes\Test]
     public function it_handles_bulk_operations()
     {
         $data = [
@@ -273,11 +244,8 @@ class BaseRepositoryTest extends TestCase
         $this->assertTrue(true);
     }
 
-    #[\PHPUnit\Framework\Attributes\Test]
-    public function it_handles_middleware()
-    {
-        $this->markTestSkipped('Middleware support has been removed from the repository.');
-    }
+    // Removed: it_dispatches_events (skipped test)
+    // Removed: it_handles_middleware (skipped test)
 }
 
 // Test doubles

@@ -2,7 +2,3 @@ parameters:
     level: 5
     paths:
         - src
-    ignoreErrors:
-        - '#Call to an undefined method [a-zA-Z0-9\\_]+::on\(\)#'
-        - '#Call to an undefined method Illuminate\\Database\\Query\\Builder::paginate\(\)#'
-        - '#missingType.iterableValue#'

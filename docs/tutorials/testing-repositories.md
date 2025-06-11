@@ -86,12 +86,12 @@ public function test_cache_invalidation_on_update()
 
 **Example:**
 ```php
-public function test_entity_created_event_fired()
+public function test_created_event_fired()
 {
     Event::fake();
     $repo = app(UserRepository::class);
     $repo->create(['name' => 'EventTest', 'email' => 'event@example.com']);
-    Event::assertDispatched(\Apiato\Repository\Events\RepositoryEntityCreated::class);
+    Event::assertDispatched(\Apiato\Repository\Events\RepositoryCreated::class);
 }
 ```
 

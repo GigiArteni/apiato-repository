@@ -3,10 +3,10 @@
 namespace Apiato\Repository\Events;
 
 /**
- * Repository Entity Created Event
- * Fired after a new entity is created
+ * Repository Created Event
+ * Fired after a new model is created
  */
-class RepositoryEntityCreated extends RepositoryEventBase
+class RepositoryCreated extends RepositoryEventBase
 {
     protected string $action = "created";
 

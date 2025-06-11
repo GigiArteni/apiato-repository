@@ -687,8 +687,8 @@ The package provides a suite of generator commands:
 php artisan make:repository UserRepository
 php artisan make:repository UserRepository --model=User
 
-# Generate Complete Entity Stack
-php artisan make:entity User --validator
+# Generate Complete Model Stack
+php artisan make:model User --validator
 # Creates: Model, Repository, Validator
 
 # Generate Criteria
@@ -724,7 +724,7 @@ $users = $repository->whereHas('orders', function($query) {
 ### **Event-Driven Architecture**
 ```php
 // Listen to repository events
-Event::listen(RepositoryEntityCreated::class, function($event) {
+Event::listen(RepositoryCreated::class, function($event) {
     Cache::tags(['users'])->flush();
     NotificationService::send($event->getModel());
 });

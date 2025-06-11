@@ -102,7 +102,7 @@ $userRepo->delete($user->getKey());
 
 - Listen for repository events:
   ```php
-  Event::listen(RepositoryEntityCreated::class, function($event) {
+  Event::listen(RepositoryCreated::class, function($event) {
       // Handle event
   });
   ```

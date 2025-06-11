@@ -3,10 +3,10 @@
 namespace Apiato\Repository\Events;
 
 /**
- * Repository Entity Updating Event
- * Fired before an entity is updated
+ * Repository Updating Event
+ * Fired before a model is updated
  */
-class RepositoryEntityUpdating extends RepositoryEventBase
+class RepositoryUpdating extends RepositoryEventBase
 {
     protected string $action = "updating";
 

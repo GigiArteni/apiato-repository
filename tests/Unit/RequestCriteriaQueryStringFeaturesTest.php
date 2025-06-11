@@ -10,9 +10,7 @@ use Apiato\Repository\Tests\Unit\TestRepository; // Make sure this path is corre
 
 class RequestCriteriaQueryStringFeaturesTest extends TestCase
 {
-    /**
-     * @dataProvider queryStringFeaturesProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('queryStringFeaturesProvider')]
     public function test_query_string_feature_is_parsed_and_applied(string $description, string $query, $expected): void
     {
         // Use the same app container and repository setup as BaseRepositoryTest

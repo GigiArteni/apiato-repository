@@ -6,15 +6,15 @@ Apiato Repository is event-driven at its core. Every major action fires an event
 
 ## 1. Core Repository Events
 
-- `RepositoryEntityCreated`
-- `RepositoryEntityCreating`
-- `RepositoryEntityUpdated`
-- `RepositoryEntityUpdating`
-- `RepositoryEntityDeleted`
-- `RepositoryEntityDeleting`
-- `RepositoryEntitiesBulkCreated`
-- `RepositoryEntitiesBulkUpdated`
-- `RepositoryEntitiesBulkDeleted`
+- `RepositoryCreated`
+- `RepositoryCreating`
+- `RepositoryUpdated`
+- `RepositoryUpdating`
+- `RepositoryDeleted`
+- `RepositoryDeleting`
+- `RepositoryBulkCreated`
+- `RepositoryBulkUpdated`
+- `RepositoryBulkDeleted`
 - `RepositoryCriteriaApplied`
 - `RepositorySanitizedEvent`
 
@@ -35,10 +35,10 @@ Apiato Repository is event-driven at its core. Every major action fires an event
 
 **Example:**
 ```php
-use Apiato\Repository\Events\RepositoryEntityCreated;
+use Apiato\Repository\Events\RepositoryCreated;
 use Illuminate\Support\Facades\Event;
 
-Event::listen(RepositoryEntityCreated::class, function($event) {
+Event::listen(RepositoryCreated::class, function($event) {
     $model = $event->getModel();
     $repository = $event->getRepository();
     // Log, notify, or audit

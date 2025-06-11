@@ -184,8 +184,8 @@ $repo->setValidator(new UserValidator())->create($data);
 ## Events & Event Payloads
 
 All actions fire events for extensibility and audit:
-- **RepositoryEntityCreated/Updated/Deleted**: On single record ops.
-- **RepositoryEntitiesBulkCreated/Updated/Deleted**: On bulk ops.
+- **RepositoryCreated/Updated/Deleted**: On single record ops.
+- **RepositoryBulkCreated/Updated/Deleted**: On bulk ops.
 - **RepositorySanitizedEvent**: On data sanitization.
 - **RepositoryCriteriaApplied**: When criteria are applied.
 

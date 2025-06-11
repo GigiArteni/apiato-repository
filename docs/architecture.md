@@ -44,9 +44,9 @@ flowchart LR
 
 ```mermaid
 graph TD;
-    Operation -->|EntityCreated| Event1[RepositoryEntityCreated]
-    Operation -->|EntityUpdated| Event2[RepositoryEntityUpdated]
-    Operation -->|EntityDeleted| Event3[RepositoryEntityDeleted]
+    Operation -->|Created| Event1[RepositoryCreated]
+    Operation -->|Updated| Event2[RepositoryUpdated]
+    Operation -->|Deleted| Event3[RepositoryDeleted]
     Event1 --> Listener1[Audit Log]
     Event2 --> Listener2[Notification]
     Event3 --> Listener3[Cache Invalidation]

@@ -5,7 +5,6 @@ namespace Apiato\Repository\Eloquent;
 use Closure;
 use Exception;
 use Illuminate\Container\Container as Application;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -14,12 +13,12 @@ use Apiato\Repository\Contracts\CriteriaInterface;
 use Apiato\Repository\Contracts\RepositoryCriteriaInterface;
 use Apiato\Repository\Contracts\RepositoryInterface;
 use Apiato\Repository\Contracts\ValidatorInterface;
-use Apiato\Repository\Events\RepositoryEntityCreated;
-use Apiato\Repository\Events\RepositoryEntityCreating;
-use Apiato\Repository\Events\RepositoryEntityDeleted;
-use Apiato\Repository\Events\RepositoryEntityDeleting;
-use Apiato\Repository\Events\RepositoryEntityUpdated;
-use Apiato\Repository\Events\RepositoryEntityUpdating;
+use Apiato\Repository\Events\RepositoryCreated;
+use Apiato\Repository\Events\RepositoryCreating;
+use Apiato\Repository\Events\RepositoryDeleted;
+use Apiato\Repository\Events\RepositoryDeleting;
+use Apiato\Repository\Events\RepositoryUpdated;
+use Apiato\Repository\Events\RepositoryUpdating;
 use Apiato\Repository\Exceptions\RepositoryException;
 use Apiato\Repository\Traits\BulkOperations;
 use Apiato\Repository\Traits\CacheableRepository;
@@ -190,7 +189,7 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
 
     public function create(array $attributes)
     {
-        event(new RepositoryEntityCreating($this, $attributes));
+        event(new RepositoryCreating($this, $attributes));
 
         if (!is_null($this->validator)) {
             $this->validator->with($attributes);
@@ -204,7 +203,7 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         $model->save();
         $this->resetModel();
 
-        event(new RepositoryEntityCreated($this, $model));
+        event(new RepositoryCreated($this, $model));
 
         return $model;
     }
@@ -213,7 +212,7 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
     {
         $this->applyCriteria();
         $this->applyScope();
-        event(new RepositoryEntityUpdating($this, $attributes));
+        event(new RepositoryUpdating($this, $attributes));
         if (!is_null($this->validator)) {
             $this->validator->with($attributes);
             if (!$this->validator->passesUpdate()) {
@@ -224,7 +223,7 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         $model->fill($attributes);
         $model->save();
         $this->resetModel();
-        event(new RepositoryEntityUpdated($this, $model));
+        event(new RepositoryUpdated($this, $model));
         return $model;
     }
 
@@ -241,12 +240,12 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
     {
         $this->applyCriteria();
         $this->applyScope();
-        event(new RepositoryEntityDeleting($this, $id));
+        event(new RepositoryDeleting($this, $id));
         $model = $this->getQuery()->findOrFail($id);
         $this->resetModel();
         $originalModel = clone $model;
         $deleted = $originalModel->delete();
-        event(new RepositoryEntityDeleted($this, $originalModel));
+        event(new RepositoryDeleted($this, $originalModel));
         return $deleted;
     }
 

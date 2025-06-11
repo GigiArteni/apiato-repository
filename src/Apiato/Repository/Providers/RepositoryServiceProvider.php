@@ -30,11 +30,10 @@ class RepositoryServiceProvider extends ServiceProvider
 
         if ($this->app->runningInConsole()) {
             $this->commands([
-                \Apiato\Repository\Generators\Commands\RepositoryMakeCommand::class,
-                \Apiato\Repository\Generators\Commands\CriteriaMakeCommand::class,
-                \Apiato\Repository\Generators\Commands\EntityMakeCommand::class,
-                \Apiato\Repository\Generators\Commands\ValidatorMakeCommand::class,
-                \Apiato\Repository\Generators\Commands\TransformerMakeCommand::class,
+                \Apiato\Repository\Generators\Commands\MakeRepositoryCommand::class,
+                \Apiato\Repository\Generators\Commands\MakeCriteriaCommand::class,
+                \Apiato\Repository\Generators\Commands\MakeValidatorCommand::class,
+                \Apiato\Repository\Generators\Commands\MakeTransformerCommand::class,
             ]);
         }
 

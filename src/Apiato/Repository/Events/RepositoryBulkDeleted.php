@@ -5,10 +5,10 @@ namespace Apiato\Repository\Events;
 use Apiato\Repository\Contracts\RepositoryInterface;
 
 /**
- * Repository Entities Bulk Deleted Event
+ * Repository Bulk Deleted Event
  * Fired after multiple entities are deleted in bulk
  */
-class RepositoryEntitiesBulkDeleted extends RepositoryEventBase
+class RepositoryBulkDeleted extends RepositoryEventBase
 {
     protected string $action = "bulk_deleted";
     protected array $conditions;

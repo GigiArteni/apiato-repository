@@ -121,7 +121,7 @@ GET /api/users?search=roles.name:admin;company.projects.status:active&filter=sta
       ->where('role', 'manager')
       ->get();
   ```
-- **Cross-Entity Bulk Operations:**
+- **Cross-Model Bulk Operations:**
   ```php
   $repo->bulkUpsert($data, ['external_id'], ['name', 'email', 'updated_at']);
   ```
