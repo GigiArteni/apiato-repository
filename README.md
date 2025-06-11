@@ -1,24 +1,21 @@
 # Apiato Repository
 
-> **The most advanced repository pattern for Apiato v.13** with HashId integration, data sanitization, smart transactions, and revolutionary middleware system
+> **Modern repository pattern for Apiato v.13** with smart transactions and high-performance bulk operations
 
 [![Latest Version](https://img.shields.io/packagist/v/apiato/repository.svg?style=flat-square)](https://packagist.org/packages/apiato/repository)
 [![Total Downloads](https://img.shields.io/packagist/dt/apiato/repository.svg?style=flat-square)](https://packagist.org/packages/apiato/repository)
-[![License](https://img.shields.io/packagist/l/apiato/repository.svg?style=flat-square)](https://packagist.org/packages/apiato/repository)
+[![License](https://img.shields.io/packagist/l/apiato-repository.svg?style=flat-square)](https://packagist.org/packages/apiato/repository)
 [![Tests](https://img.shields.io/github/actions/workflow/status/GigiArteni/apiato-repository/tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/GigiArteni/apiato-repository/actions)
 
 ## ⚡ Quick Overview
 
-**Apiato Repository** is the **most advanced repository pattern implementation** available for **Apiato v.13** projects. It provides seamless integration with Apiato's HashId system while delivering **40-80% performance improvements** and **enterprise-grade security features**.
+**Apiato Repository** is a modern repository pattern implementation for **Apiato v.13** projects. It delivers high performance, smart transactions, and bulk operations for enterprise-grade Laravel applications.
 
-### 🎯 Revolutionary Features
+### 🎯 Features
 
 - ✅ **Drop-in Replacement**: Migrate from l5-repository with minimal changes
-- ✅ **HashId Integration**: Automatic HashId decoding using Apiato's `vinkla/hashids`
-- ✅ **Data Sanitization**: Automatic integration with Apiato's `sanitizeInput()`
 - ✅ **Smart Transactions**: Intelligent database transaction handling with retry logic
 - ✅ **Advanced Bulk Operations**: High-performance bulk insert/update/upsert operations
-- ✅ **Repository Middleware**: **Industry-first** middleware system for repositories
 - ✅ **Enhanced Search**: Intelligent search with relevance scoring and fuzzy matching
 - ✅ **Enhanced Performance**: 40-80% faster operations with intelligent caching
 - ✅ **Modern PHP**: Built for PHP 8.1+ with full type safety
@@ -30,93 +27,10 @@
 | Operation | Before | After | Improvement |
 |-----------|--------|-------|-------------|
 | Basic Find | 45ms | 28ms | **38% faster** |
-| HashId Operations | 15ms | 3ms | **80% faster** |
 | Bulk Operations | 2.5s | 800ms | **68% faster** |
 | Search + Filter | 95ms | 52ms | **45% faster** |
 | With Relations | 120ms | 65ms | **46% faster** |
 | API Response | 185ms | 105ms | **43% faster** |
-
----
-
-## 🛡️ **Enterprise Security - Data Sanitization**
-
-**Automatic data sanitization** with seamless **Apiato integration** for enterprise-grade security.
-
-### 🎯 **Automatic Apiato Integration**
-
-The package automatically integrates with Apiato's `$request->sanitizeInput()` method:
-
-```php
-// Automatic sanitization on every create/update
-$user = $repository->create([
-    'name' => '<script>alert("xss")</script>John',  // Automatically sanitized
-    'email' => 'user@example.com',
-    'bio' => '<p>Valid content</p><script>bad</script>', // HTML purified
-    'role_id' => 'abc123'  // HashId decoded + sanitized
-]);
-
-// Result: Clean, secure data
-// name: "John" (script removed)
-// bio: "<p>Valid content</p>" (script removed, valid HTML kept)
-// role_id: 123 (HashId decoded)
-```
-
-### 🔧 **Sanitization Configuration**
-
-```php
-// config/repository.php
-'security' => [
-    'sanitize_input' => env('REPOSITORY_SANITIZE_INPUT', true),
-    'sanitize_on' => [
-        'create' => true,
-        'update' => true,
-        'bulk_operations' => true,
-    ],
-    'sanitize_fields' => [
-        'exclude' => ['password', 'token'], // Never sanitize these
-        'html_fields' => ['description', 'bio'], // HTML purify these
-        'email_fields' => ['email', 'contact_email'], // Email sanitization
-    ],
-    'audit_sanitization' => true, // Log sanitization changes
-],
-```
-
-### 🎮 **Advanced Sanitization Control**
-
-```php
-// Custom sanitization rules per operation
-$user = $repository
-    ->setSanitizationRules([
-        'bio' => 'html_purify',
-        'email' => 'email',
-        'phone' => 'numeric'
-    ])
-    ->create($data);
-
-// Skip sanitization for trusted data
-$user = $repository
-    ->skipSanitization()
-    ->create($trustedData);
-
-// Batch sanitization for bulk operations
-$sanitizedRecords = $repository->batchSanitize($records, 'bulk_operations');
-```
-
-### 📊 **Sanitization Audit Trail**
-
-```php
-// Listen to sanitization events for security monitoring
-Event::listen(DataSanitizedEvent::class, function($event) {
-    if ($event->getChangedFieldsCount() > 0) {
-        SecurityLogger::log('Data sanitized', [
-            'user_id' => auth()->id(),
-            'fields_changed' => $event->getChangedFields(),
-            'ip' => request()->ip(),
-            'repository' => $event->getRepository()::class
-        ]);
-    }
-});
-```
 
 ---
 
@@ -196,7 +110,7 @@ if ($repository->inTransaction()) {
 
 ## 🚀 **Advanced Bulk Operations**
 
-**High-performance bulk operations** with automatic timestamps, HashId support, and intelligent chunking.
+**High-performance bulk operations** with automatic timestamps and intelligent chunking.
 
 ### 🎯 **Bulk Insert with Advanced Features**
 
@@ -226,7 +140,7 @@ $result = $repository->bulkInsert($records, [
 // Smart upsert with automatic conflict resolution
 $stats = $repository->bulkUpsert(
     $records,
-    ['id'],                    // Unique columns (HashIds supported)
+    ['id'],                    // Unique columns
     ['name', 'email', 'updated_at'], // Columns to update on conflict
     ['batch_size' => 500]      // Options
 );
@@ -238,21 +152,21 @@ echo "Inserted: {$stats['inserted']}, Updated: {$stats['updated']}";
 ### 🎮 **Advanced Bulk Operations**
 
 ```php
-// Bulk update with conditions and HashIds
+// Bulk update with conditions
 $affected = $repository->bulkUpdate(
     ['status' => 'active', 'updated_at' => now()], // Values to update
-    ['company_id' => 'abc123', 'department' => 'IT'], // Conditions (HashIds decoded)
-    ['timestamps' => true, 'process_hashids' => true]  // Options
+    ['company_id' => 123, 'department' => 'IT'], // Conditions
+    ['timestamps' => true]  // Options
 );
 
-// Bulk delete with HashId support
+// Bulk delete
 $deleted = $repository->bulkDelete([
-    'company_id' => 'abc123',  // HashId automatically decoded
+    'company_id' => 123,
     'status' => 'inactive'
 ]);
 
-// Bulk delete by HashIds
-$deleted = $repository->bulkDeleteByIds(['abc123', 'def456', 'ghi789']);
+// Bulk delete by IDs
+$deleted = $repository->bulkDeleteByIds([1, 2, 3]);
 ```
 
 ### 🏗️ **Bulk Operations Configuration**
@@ -263,144 +177,7 @@ $deleted = $repository->bulkDeleteByIds(['abc123', 'def456', 'ghi789']);
     'enabled' => true,
     'chunk_size' => 1000,              // Default chunk size
     'use_transactions' => true,        // Wrap in transactions
-    'sanitize_data' => true,           // Apply data sanitization
-    'validate_hashids' => true,        // Validate HashId format
     'log_performance' => false,        // Log performance metrics
-],
-```
-
----
-
-## 🎛️ **Repository Middleware System** ⭐ **REVOLUTIONARY**
-
-**Industry-first middleware system** for repositories - apply cross-cutting concerns like Laravel middleware.
-
-### 🎯 **Basic Middleware Usage**
-
-```php
-// Apply middleware to repository operations
-$users = $repository
-    ->middleware(['audit', 'cache:30', 'rate-limit:100'])
-    ->all();
-
-// Multiple middleware with parameters
-$user = $repository
-    ->middleware([
-        'audit:create,update,delete',  // Audit specific operations
-        'cache:60',                    // Cache for 60 minutes
-        'tenant-scope:company_id',     // Multi-tenant filtering
-        'performance:500'              // Alert on >500ms queries
-    ])
-    ->find($id);
-```
-
-### 🏗️ **Repository-Level Middleware**
-
-```php
-<?php
-
-namespace App\Repositories;
-
-use Apiato\Repository\Eloquent\BaseRepository;
-
-class UserRepository extends BaseRepository
-{
-    // Apply middleware to all operations in this repository
-    protected $middleware = [
-        'audit:create,update,delete',
-        'cache:45',
-        'tenant-scope:company_id',
-        'rate-limit:200,1'
-    ];
-
-    public function model()
-    {
-        return User::class;
-    }
-
-    // Custom middleware for sensitive operations
-    public function updateSensitiveData(array $data, $id)
-    {
-        return $this->middleware(['audit', 'performance:100'])
-            ->update($data, $id);
-    }
-}
-```
-
-### 🛠️ **Available Middleware**
-
-#### **Audit Middleware** - Complete operation tracking
-```php
-$repository->middleware(['audit'])->create($data);
-// Logs: user_id, IP, operation, duration, timestamp
-```
-
-#### **Cache Middleware** - Advanced caching with tags
-```php
-$repository->middleware(['cache:30'])->all();
-// Caches for 30 minutes, auto-invalidates on write operations
-```
-
-#### **Rate Limit Middleware** - Prevent abuse
-```php
-$repository->middleware(['rate-limit:100,1'])->all();
-// Max 100 operations per minute per user/IP
-```
-
-#### **Tenant Scope Middleware** - Multi-tenancy
-```php
-$repository->middleware(['tenant-scope:company_id'])->all();
-// Automatically filters by current tenant
-```
-
-#### **Performance Monitor Middleware** - Query optimization
-```php
-$repository->middleware(['performance:1000'])->complexQuery();
-// Alerts on queries taking >1000ms
-```
-
-### 🎮 **Custom Middleware**
-
-```php
-<?php
-
-namespace App\Middleware;
-
-use Apiato\Repository\Middleware\RepositoryMiddleware;
-
-class SecurityMiddleware extends RepositoryMiddleware
-{
-    public function handle($repository, $method, $args, $next)
-    {
-        // Check permissions
-        if (!auth()->user()->can("repository.{$method}")) {
-            throw new UnauthorizedException();
-        }
-
-        // Log security-sensitive operations
-        SecurityLogger::log($method, $repository, auth()->user());
-
-        return $next($repository, $method, $args);
-    }
-}
-
-// Usage
-$repository->middleware([SecurityMiddleware::class])->create($data);
-```
-
-### ⚙️ **Middleware Configuration**
-
-```php
-// config/repository.php
-'middleware' => [
-    'default_stack' => ['audit', 'cache:30'],  // Applied to all repositories
-    'available' => [
-        'audit' => AuditMiddleware::class,
-        'cache' => CacheMiddleware::class,
-        'rate-limit' => RateLimitMiddleware::class,
-        'tenant-scope' => TenantScopeMiddleware::class,
-        'performance' => PerformanceMonitorMiddleware::class,
-    ]
 ],
 ```
 
@@ -456,12 +233,11 @@ GET /api/users?search=smith~1 +engineer   # Fuzzy "smith" + must contain "engine
 
 ---
 
-## 📋 **Requirements**
+## 🏷️ **Requirements**
 
 - **PHP**: 8.1 or higher
 - **Laravel**: 11.0+ or 12.0+
 - **Apiato**: v.13
-- **HashIds**: `vinkla/hashids` (auto-detected in Apiato projects)
 
 ---
 
@@ -548,26 +324,6 @@ class UserRepository extends BaseRepository
         $this->pushCriteria(app(RequestCriteria::class));
     }
 }
-```
-
----
-
-## 🏷️ **HashId Integration**
-
-### Automatic HashId Support
-
-The package automatically integrates with Apiato's HashId system. No manual configuration needed!
-
-```php
-// All these work automatically with HashIds
-$user = $repository->find('gY6N8'); // HashId decoded automatically
-$users = $repository->findWhereIn('id', ['abc123', 'def456']); // Multiple HashIds
-$posts = $repository->findWhere(['user_id' => 'gY6N8']); // HashIds in conditions
-
-// API endpoints work with HashIds automatically
-GET /api/users?search=id:gY6N8          // HashId in search
-GET /api/users?filter=user_id:gY6N8     // HashId in filter
-GET /api/users?search=role_id:in:abc123,def456  // Multiple HashIds
 ```
 
 ---
@@ -924,7 +680,7 @@ REPOSITORY_EVENT_DISPATCHING=true
 
 ## 🛠️ **Artisan Commands**
 
-The package provides a complete suite of generator commands:
+The package provides a suite of generator commands:
 
 ```bash
 # Generate Repository
@@ -932,14 +688,13 @@ php artisan make:repository UserRepository
 php artisan make:repository UserRepository --model=User
 
 # Generate Complete Entity Stack
-php artisan make:entity User --presenter --validator
-# Creates: Model, Repository, Presenter, Validator
+php artisan make:entity User --validator
+# Creates: Model, Repository, Validator
 
 # Generate Criteria
 php artisan make:criteria ActiveUsersCriteria
 
-# Generate Presenter & Transformer
-php artisan make:presenter UserPresenter --transformer=UserTransformer
+# Generate Transformer
 php artisan make:transformer UserTransformer --model=User
 
 # Generate Validator
@@ -983,12 +738,7 @@ Event::listen(DataSanitizedEvent::class, function($event) {
 
 ## 📈 **Performance Tips**
 
-### **1. Use Repository Middleware for Caching**
-```php
-protected $middleware = ['cache:60']; // Cache all operations for 60 minutes
-```
-
-### **2. Optimize Bulk Operations**
+### **1. Optimize Bulk Operations**
 ```php
 // Process large datasets efficiently
 $repository->bulkInsert($millionRecords, [
@@ -997,51 +747,26 @@ $repository->bulkInsert($millionRecords, [
 ]);
 ```
 
-### **3. Use Transactions for Data Integrity**
+### **2. Use Transactions for Data Integrity**
 ```php
 // Automatic transaction management
 $repository->safeCreate($criticalData); // Wrapped automatically if needed
 ```
 
-### **4. Monitor Performance with Middleware**
+### **3. Monitor Performance**
 ```php
-$repository->middleware(['performance:500'])->expensiveOperation();
-// Alerts if operation takes >500ms
+// Use logging or custom events to monitor performance
 ```
 
 ---
 
 ## 🐛 **Troubleshooting**
 
-### **HashIds Not Working**
-```php
-// Debug HashId service
-if (app()->bound('hashids')) {
-    $decoded = app('hashids')->decode('gY6N8');
-    dd($decoded); // Should show numeric ID
-}
-```
-
-### **Sanitization Issues**
-```php
-// Test sanitization
-Event::listen(DataSanitizedEvent::class, function($event) {
-    logger('Sanitization changes', $event->getChanges());
-});
-```
-
 ### **Transaction Problems**
 ```php
 // Debug transaction state
 $stats = $repository->getTransactionStats();
 logger('Transaction stats', $stats);
-```
-
-### **Middleware Issues**
-```php
-// Debug middleware execution
-$repository->middleware(['audit'])->create($data);
-// Check logs for audit entries
 ```
 
 ---

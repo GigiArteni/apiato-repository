@@ -334,9 +334,8 @@ trait TransactionalRepository
      */
     public function bulkUpdateSafely(array $conditions, array $attributes): int
     {
-        return $this->transaction(function() use ($conditions, $attributes) {
-            return $this->updateWhere($conditions, $attributes);
-        });
+        // updateWhere was removed; provide a clear error or implement a fallback if needed
+        throw new \BadMethodCallException('bulkUpdateSafely requires updateWhere(), which has been removed from this repository. Please implement your own bulk update logic.');
     }
 
     /**

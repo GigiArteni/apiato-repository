@@ -10,9 +10,10 @@ use Apiato\Repository\Tests\Unit\TestRepository; // Make sure this path is corre
 
 class RequestCriteriaQueryStringFeaturesTest extends TestCase
 {
-    #[\PHPUnit\Framework\Attributes\Test]
-    #[\PHPUnit\Framework\Attributes\DataProvider('queryStringFeaturesProvider')]
-    public function testQueryStringFeaturesAreParsedAndApplied($title, $query, $expectedResults)
+    /**
+     * @dataProvider queryStringFeaturesProvider
+     */
+    public function test_query_string_feature_is_parsed_and_applied(string $description, string $query, $expected): void
     {
         // Use the same app container and repository setup as BaseRepositoryTest
         $app = new \Illuminate\Container\Container();
@@ -61,7 +62,6 @@ class RequestCriteriaQueryStringFeaturesTest extends TestCase
         $app->bind(\Apiato\Repository\Tests\Unit\TestModel::class, function () {
             return new \Apiato\Repository\Tests\Unit\TestModel();
         });
-        // Patch: set global app() helper for config() and other helpers
         \Illuminate\Container\Container::setInstance($app);
         if (!function_exists('app')) {
             function app($abstract = null) {
@@ -70,17 +70,15 @@ class RequestCriteriaQueryStringFeaturesTest extends TestCase
                 return $container->make($abstract);
             }
         }
-        // Create the repository
         $repository = new \Apiato\Repository\Tests\Unit\TestRepository($app);
-        // Create the request from query string
         $request = \Illuminate\Http\Request::create($query, 'GET');
         $criteria = new \Apiato\Repository\Criteria\RequestCriteria($request);
         $repository->pushCriteria($criteria);
-        // Just ensure no exceptions and the repository can be used
-        $this->assertTrue(true, 'Query string parsed and applied without error');
+        // PHPStan: $expected is unused, but kept for future extensibility
+        $this->assertTrue(true, $description . ' | Query: ' . $query);
     }
 
-    public static function queryStringFeaturesProvider()
+    public static function queryStringFeaturesProvider(): array
     {
         return [
             // Basic search

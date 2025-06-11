@@ -33,7 +33,6 @@ class RepositoryServiceProvider extends ServiceProvider
                 \Apiato\Repository\Generators\Commands\RepositoryMakeCommand::class,
                 \Apiato\Repository\Generators\Commands\CriteriaMakeCommand::class,
                 \Apiato\Repository\Generators\Commands\EntityMakeCommand::class,
-                \Apiato\Repository\Generators\Commands\PresenterMakeCommand::class,
                 \Apiato\Repository\Generators\Commands\ValidatorMakeCommand::class,
                 \Apiato\Repository\Generators\Commands\TransformerMakeCommand::class,
             ]);

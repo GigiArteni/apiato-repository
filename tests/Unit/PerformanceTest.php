@@ -120,6 +120,7 @@ class PerformanceTest extends TestCase
         }
         $elapsed = (microtime(true) - $start) * 1000;
         fwrite(STDERR, "Bulk Update (2000 rows): {$elapsed} ms\n");
+        echo "\n[Performance] Bulk Update (2000 rows): {$elapsed} ms\n";
         $this->assertTrue(true);
     }
 
@@ -144,24 +145,6 @@ class PerformanceTest extends TestCase
         ]);
         $elapsed = (microtime(true) - $start) * 1000;
         fwrite(STDERR, "Criteria Query: {$elapsed} ms\n");
-        $this->assertTrue(true);
-    }
-
-    #[\PHPUnit\Framework\Attributes\Test]
-    public function it_benchmarks_data_sanitization()
-    {
-        $dirty = [];
-        for ($i = 0; $i < 2000; $i++) {
-            $dirty[] = [
-                'name' => 'User'.$i,
-                'email' => 'user'.$i.'@example.com',
-                'bio' => '<img src=x onerror=alert(1)><b>Bio</b>'.$i
-            ];
-        }
-        $start = microtime(true);
-        $this->repository->bulkInsert($dirty);
-        $elapsed = (microtime(true) - $start) * 1000;
-        fwrite(STDERR, "Data Sanitization (2000 rows): {$elapsed} ms\n");
         $this->assertTrue(true);
     }
 
@@ -250,7 +233,7 @@ class PerformanceTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
-    public function it_benchmarks_middleware_stack()
+    public function it_benchmarks_simulated_middleware_stack_performance()
     {
         // Simulate middleware by wrapping create in a closure
         $rows = [];
@@ -263,7 +246,6 @@ class PerformanceTest extends TestCase
         }
         $middleware = function ($next) {
             return function ($row) use ($next) {
-                // Simulate work
                 usleep(1000); // 1ms
                 return $next($row);
             };
@@ -277,7 +259,8 @@ class PerformanceTest extends TestCase
             $stack($row);
         }
         $elapsed = (microtime(true) - $start) * 1000;
-        fwrite(STDERR, "Middleware Stack (500 rows, 1ms/row): {$elapsed} ms\n");
+        fwrite(STDERR, "Simulated Middleware Stack (500 rows, 1ms/row): {$elapsed} ms\n");
+        echo "\n[Performance] Simulated Middleware Stack (500 rows, 1ms/row): {$elapsed} ms\n";
         $this->assertTrue(true);
     }
 
@@ -341,7 +324,7 @@ class PerformanceTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
-    public function it_benchmarks_custom_middleware_chain()
+    public function it_benchmarks_simulated_custom_middleware_chain_performance()
     {
         $rows = [];
         for ($i = 0; $i < 500; $i++) {
@@ -380,7 +363,8 @@ class PerformanceTest extends TestCase
             $stack($row);
         }
         $elapsed = (microtime(true) - $start) * 1000;
-        fwrite(STDERR, "Custom Middleware Chain (500 rows, 3x0.5ms/row): {$elapsed} ms\n");
+        fwrite(STDERR, "Simulated Custom Middleware Chain (500 rows, 3x0.5ms/row): {$elapsed} ms\n");
+        echo "\n[Performance] Simulated Custom Middleware Chain (500 rows, 3x0.5ms/row): {$elapsed} ms\n";
         $this->assertTrue(true);
     }
 
@@ -530,6 +514,7 @@ class PerformanceTest extends TestCase
         }
         $elapsed = (microtime(true) - $start) * 1000;
         fwrite(STDERR, "Caching (10x all() with array cache): {$elapsed} ms\n");
+        echo "\n[Performance] Caching (10x all() with array cache): {$elapsed} ms\n";
         $this->assertTrue(true);
     }
 
@@ -543,15 +528,14 @@ class PerformanceTest extends TestCase
         $summary .= "| Bulk Insert (5000 rows)        | ~800                   |\n";
         $summary .= "| Bulk Update (2000 rows)        | ~600                   |\n";
         $summary .= "| Criteria Query                 | <1                     |\n";
-        $summary .= "| Data Sanitization (2000 rows)  | ~300                   |\n";
         $summary .= "| Eager Loading (2000 rows)      | ~12                    |\n";
         $summary .= "| Complex Criteria Query         | <1                     |\n";
         $summary .= "| Smart Transaction (1000 rows)  | ~150                   |\n";
         $summary .= "| Bulk Delete (1000 rows)        | ~170                   |\n";
-        $summary .= "| Middleware Stack (500 rows)    | ~5000                  |\n";
+        $summary .= "| Simulated Middleware Stack (500 rows)    | ~5000                  |\n";
         $summary .= "| Relationship Eager Loading     | ~50                    |\n";
         $summary .= "| Advanced Criteria Parsing      | <1                     |\n";
-        $summary .= "| Custom Middleware Chain        | ~14000                 |\n";
+        $summary .= "| Simulated Custom Middleware Chain (500 rows)        | ~14000                 |\n";
         $summary .= "| Mass Upsert (2000 rows)        | ~1200                  |\n";
         $summary .= "| Mass Validation (1000 rows)    | ~10                    |\n";
         $summary .= "| Large Result Pagination        | ~10                    |\n";
@@ -566,14 +550,12 @@ class PerformanceTest extends TestCase
 
 class PerformanceTestRepository extends \Apiato\Repository\Eloquent\BaseRepository
 {
-    use \Apiato\Repository\Traits\SanitizableRepository;
     public function model() { return PerformanceTestModel::class; }
     public function bulkInsert(array $data, array $options = []): int {
-        $sanitized = array_map(fn($row) => $this->sanitizeData($row, 'bulk_create'), $data);
-        foreach ($sanitized as $row) {
+        foreach ($data as $row) {
             $this->model->create($row);
         }
-        return count($sanitized);
+        return count($data);
     }
     public function update(array $attributes, $id) {
         $model = $this->find($id);

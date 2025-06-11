@@ -276,7 +276,7 @@ class BaseRepositoryTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function it_handles_middleware()
     {
-        $this->assertTrue(method_exists($this->repository, 'middleware'));
+        $this->markTestSkipped('Middleware support has been removed from the repository.');
     }
 }
 

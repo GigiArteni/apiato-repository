@@ -10,7 +10,7 @@ use Illuminate\Console\Command;
  */
 class EntityMakeCommand extends Command
 {
-    protected $signature = 'make:entity {name} {--fillable=} {--rules=} {--validator=} {--presenter=} {--force}';
+    protected $signature = 'make:entity {name} {--fillable=} {--rules=} {--validator=} {--force}';
     protected $description = 'Create a new entity (Model, Repository, etc.) for Apiato v.13';
 
     public function handle()
@@ -29,14 +29,6 @@ class EntityMakeCommand extends Command
             '--force' => $this->option('force')
         ]);
 
-        // Generate presenter if requested
-        if ($this->option('presenter')) {
-            $this->call('make:presenter', [
-                'name' => $name . 'Presenter',
-                '--force' => $this->option('force')
-            ]);
-        }
-
         // Generate validator if requested
         if ($this->option('validator')) {
             $this->call('make:validator', [
@@ -47,8 +39,7 @@ class EntityMakeCommand extends Command
         }
 
         $this->info('Entity created successfully!');
-        $this->line("<info>Generated:</info> Model, Repository" . 
-                   ($this->option('presenter') ? ', Presenter' : '') .
+        $this->line("<info>Generated:</info> Model, Repository" .
                    ($this->option('validator') ? ', Validator' : ''));
 
         return true;

@@ -118,9 +118,8 @@ class RequestCriteria implements CriteriaInterface
         preg_match_all('/([+\-]?)(\w+(?:~\d+)?)/', $search, $matches, PREG_SET_ORDER);
         
         foreach ($matches as $match) {
-            $operator = $match[1] ?? '';
-            $term = $match[2] ?? '';
-            
+            $operator = $match[1];
+            $term = $match[2];
             if (empty($term)) continue;
 
             // Check for fuzzy search (word~2)

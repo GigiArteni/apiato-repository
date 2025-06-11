@@ -28,7 +28,7 @@ class RepositoryIntegrationTest extends TestCase
     public function testConfigurationIsLoaded()
     {
         $this->assertNotNull(config('repository'));
-        $this->assertIsArray(config('repository.apiato'));
+        $this->assertIsArray(config('repository'));
     }
 
     // Add more integration tests here

@@ -11,7 +11,7 @@ use Illuminate\Support\Str;
  */
 class RepositoryMakeCommand extends Command
 {
-    protected $signature = 'make:repository {name} {--model=} {--fillable=} {--rules=} {--validator=} {--presenter=} {--force}';
+    protected $signature = 'make:repository {name} {--model=} {--fillable=} {--rules=} {--validator=} {--force}';
     protected $description = 'Create a new repository class for Apiato v.13';
 
     protected Filesystem $files;

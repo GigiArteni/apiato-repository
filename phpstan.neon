@@ -5,4 +5,4 @@ parameters:
     ignoreErrors:
         - '#Call to an undefined method [a-zA-Z0-9\\_]+::on\(\)#'
         - '#Call to an undefined method Illuminate\\Database\\Query\\Builder::paginate\(\)#'
-    checkMissingIterableValueType: false
+        - '#missingType.iterableValue#'
