@@ -115,4 +115,13 @@ return [
     | Enable or disable automatic HashId decoding for all repositories
     */
     'hashid_decode' => env('REPOSITORY_HASHID_DECODE', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Eager Loading via Query Parameter
+    |--------------------------------------------------------------------------
+    | Enable or disable automatic eager loading of relations via the `include` query parameter.
+    | Supports dot notation (e.g. ?include=user.roles.permissions)
+    */
+    'eager_load_includes' => env('REPOSITORY_EAGER_LOAD_INCLUDES', true),
 ];

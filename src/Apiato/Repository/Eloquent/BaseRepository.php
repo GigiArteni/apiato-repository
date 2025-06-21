@@ -524,10 +524,34 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         $this->query = $query;
     }
 
-    // Helper to get the current query builder (protected for test access)
+    /**
+     * Apply eager loading from the `include` query parameter if enabled in config.
+     * Supports dot notation (e.g. ?include=user.roles.permissions)
+     */
+    protected function applyEagerLoadIncludes(Builder $query): Builder
+    {
+        if (!config('repository.eager_load_includes', true)) {
+            return $query;
+        }
+        $includeParam = request()->query('include');
+        if (empty($includeParam)) {
+            return $query;
+        }
+        $relations = array_filter(array_map('trim', explode(',', $includeParam)));
+        if (!empty($relations)) {
+            $query = $query->with($relations);
+        }
+        return $query;
+    }
+
+    /**
+     * Override getQuery to always apply eager loading includes if enabled.
+     */
     protected function getQuery(): Builder
     {
-        return $this->query ?? $this->model->newQuery();
+        $query = $this->query ?? $this->model->newQuery();
+        $query = $this->applyEagerLoadIncludes($query);
+        return $query;
     }
 
     /**
