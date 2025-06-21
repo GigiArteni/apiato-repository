@@ -174,7 +174,7 @@ class BaseRepositoryTest extends TestCase
     {
         $user = $this->repository->create(['name' => 'Criteria', 'email' => 'criteria@example.com']);
         $criteria = new class implements \Apiato\Repository\Contracts\CriteriaInterface {
-            public function apply($model, $repository) {
+            public function apply(\Illuminate\Database\Eloquent\Model|\Illuminate\Database\Eloquent\Builder $model, \Apiato\Repository\Contracts\RepositoryInterface $repository): \Illuminate\Database\Eloquent\Model|\Illuminate\Database\Eloquent\Builder {
                 return $model->where('name', 'Criteria');
             }
         };
@@ -238,39 +238,32 @@ class BaseRepositoryTest extends TestCase
 // Test doubles
 class TestRepository extends BaseRepository
 {
-    public function model()
+    public function model(): string
     {
         return TestModel::class;
     }
     // Implement required abstract methods for testing
-    public function hidden(array $fields) {
-        $this->hidden = $fields;
-        $this->model->setHidden($fields); // Ensure all new models inherit hidden fields
-        return $this;
-    }
-    public function visible(array $fields) {
-        $this->visible = $fields;
-        $this->model->setVisible($fields); // Ensure all new models inherit visible fields
-        return $this;
-    }
-    public function scopeQuery(\Closure $scope) { return $this; }
-    public function getFieldsSearchable() { return []; }
-    public function setPresenter($presenter) { return $this; }
-    public function skipPresenter($status = true) { return $this; }
-    public function all($columns = ['*']) { return $this->getQuery()->get($columns); }
-    public function first($columns = ['*']) { return $this->getQuery()->first($columns); }
-    public function paginate($limit = null, $columns = ['*']) { return $this->getQuery()->paginate($limit, $columns); }
-    public function find($id, $columns = ['*']) { return $this->getQuery()->find($id, $columns); }
-    public function findByField($field, $value, $columns = ['*']) { return $this->getQuery()->where($field, $value)->get($columns); }
-    public function findWhere(array $where, $columns = ['*']) { $query = $this->getQuery(); foreach ($where as $k => $v) { $query->where($k, $v); } return $query->get($columns); }
-    public function findWhereIn($field, array $where, $columns = ['*']) { return $this->getQuery()->whereIn($field, $where)->get($columns); }
-    public function findWhereNotIn($field, array $where, $columns = ['*']) { return $this->getQuery()->whereNotIn($field, $where)->get($columns); }
-    public function findWhereBetween($field, array $where, $columns = ['*']) { return $this->getQuery()->whereBetween($field, $where)->get($columns); }
-    public function create(array $attributes) { return $this->model->create($attributes); }
-    public function update(array $attributes, $id) { $model = $this->find($id); $model->update($attributes); return $model; }
-    public function updateOrCreate(array $attributes, array $values = []) { return $this->model->updateOrCreate($attributes, $values); }
-    public function delete($id) { $model = $this->find($id); return $model ? $model->delete() : false; }
-    public function deleteWhere(array $where) { return $this->findWhere($where)->each->delete(); }
+    public function hidden(array $fields): static { $this->hidden = $fields; $this->model->setHidden($fields); return $this; }
+    public function visible(array $fields): static { $this->visible = $fields; $this->model->setVisible($fields); return $this; }
+    public function scopeQuery(\Closure $scope): static { return $this; }
+    public function getFieldsSearchable(): array { return []; }
+    public function setPresenter(mixed $presenter): static { return $this; }
+    public function skipPresenter(bool $status = true): static { return $this; }
+    public function all(array $columns = ['*']): \Illuminate\Support\Collection { return $this->getQuery()->get($columns); }
+    public function first(array $columns = ['*']): mixed { return $this->getQuery()->first($columns); }
+    public function paginate(?int $limit = null, array $columns = ['*']): mixed { return $this->getQuery()->paginate($limit, $columns); }
+    public function find(mixed $id, array $columns = ['*']): mixed { return $this->getQuery()->find($id, $columns); }
+    public function findByField(string $field, mixed $value, array $columns = ['*']): \Illuminate\Support\Collection { return $this->getQuery()->where($field, $value)->get($columns); }
+    public function findWhere(array $where, array $columns = ['*']): \Illuminate\Support\Collection { $query = $this->getQuery(); foreach ($where as $k => $v) { $query->where($k, $v); } return $query->get($columns); }
+    public function findWhereIn(string $field, array $where, array $columns = ['*']): \Illuminate\Support\Collection { return $this->getQuery()->whereIn($field, $where)->get($columns); }
+    public function findWhereNotIn(string $field, array $where, array $columns = ['*']): \Illuminate\Support\Collection { return $this->getQuery()->whereNotIn($field, $where)->get($columns); }
+    public function findWhereBetween(string $field, array $where, array $columns = ['*']): \Illuminate\Support\Collection { return $this->getQuery()->whereBetween($field, $where)->get($columns); }
+    public function create(array $attributes): mixed { return $this->model->create($attributes); }
+    public function update(array $attributes, mixed $id): mixed { return $this->model->where('id', $id)->update($attributes); }
+    public function updateOrCreate(array $attributes, array $values = []): mixed { return $this->model->updateOrCreate($attributes, $values); }
+    public function delete(mixed $id): bool { return (bool) $this->model->destroy($id); }
+    public function deleteWhere(array $where): int { $query = $this->getQuery(); foreach ($where as $k => $v) { $query->where($k, $v); } return $query->delete(); }
+    public function findByCriteria(\Apiato\Repository\Contracts\CriteriaInterface $criteria): mixed { return null; }
     protected function applyFieldVisibility($model)
     {
         if (!empty($this->hidden)) {

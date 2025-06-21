@@ -12,7 +12,7 @@ interface TransformerInterface
      * Transform the given data
      *
      * @param mixed $model
-     * @return array
+     * @return array<string, mixed>
      */
-    public function transform($model);
+    public function transform(mixed $model): array;
 }

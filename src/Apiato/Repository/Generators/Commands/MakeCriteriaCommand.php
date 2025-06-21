@@ -19,9 +19,13 @@ class MakeCriteriaCommand extends Command
         parent::__construct();
         $this->files = $files;
     }
-    public function handle()
+    public function handle(): bool
     {
         $name = $this->argument('name');
+        if (!is_string($name)) {
+            $this->error('Invalid criteria name.');
+            return false;
+        }
         if (!Str::endsWith($name, 'Criteria')) {
             $name .= 'Criteria';
         }
@@ -37,13 +41,13 @@ class MakeCriteriaCommand extends Command
         $this->line("<info>Criteria:</info> {$path}");
         return true;
     }
-    protected function makeDirectory($path)
+    protected function makeDirectory(string $path): void
     {
         if (!$this->files->isDirectory(dirname($path))) {
             $this->files->makeDirectory(dirname($path), 0777, true, true);
         }
     }
-    protected function getStub()
+    protected function getStub(): string
     {
         return '<?php\n\nnamespace App\\Criteria;\n\nuse Apiato\\Repository\\Contracts\\CriteriaInterface;\nuse Apiato\\Repository\\Contracts\\RepositoryInterface;\n\n/**\n * Class {{CLASS}}\n * @package App\\Criteria\n */\nclass {{CLASS}} implements CriteriaInterface\n{\n    /**\n     * Apply criteria in query repository\n     */\n    public function apply($model, RepositoryInterface $repository)\n    {\n        // Add your criteria logic here\n        \n        return $model;\n    }\n}\n';
     }

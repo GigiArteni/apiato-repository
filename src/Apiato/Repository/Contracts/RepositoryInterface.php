@@ -2,6 +2,8 @@
 
 namespace Apiato\Repository\Contracts;
 
+use Closure;
+
 /**
  * Repository Interface - Enhanced for Apiato v.13
  * Compatible with repository pattern + performance improvements
@@ -9,28 +11,28 @@ namespace Apiato\Repository\Contracts;
 interface RepositoryInterface
 {
     // Core repository methods
-    public function all($columns = ['*']);
-    public function first($columns = ['*']);
-    public function paginate($limit = null, $columns = ['*']);
-    public function find($id, $columns = ['*']);
-    public function findByField($field, $value, $columns = ['*']);
-    public function findWhere(array $where, $columns = ['*']);
-    public function findWhereIn($field, array $where, $columns = ['*']);
-    public function findWhereNotIn($field, array $where, $columns = ['*']);
-    public function findWhereBetween($field, array $where, $columns = ['*']);
-    public function create(array $attributes);
-    public function update(array $attributes, $id);
-    public function updateOrCreate(array $attributes, array $values = []);
-    public function delete($id);
-    public function deleteWhere(array $where);
-    public function orderBy($column, $direction = 'asc');
-    public function with(array $relations);
-    public function has(string $relation);
-    public function whereHas(string $relation, \Closure $closure);
-    public function hidden(array $fields);
-    public function visible(array $fields);
-    public function scopeQuery(\Closure $scope);
-    public function getFieldsSearchable();
-    public function setPresenter($presenter);
-    public function skipPresenter($status = true);
+    public function all(array $columns = ['*']): \Illuminate\Support\Collection;
+    public function first(array $columns = ['*']): mixed;
+    public function paginate(int $limit = null, array $columns = ['*']): mixed;
+    public function find(mixed $id, array $columns = ['*']): mixed;
+    public function findByField(string $field, mixed $value, array $columns = ['*']): \Illuminate\Support\Collection;
+    public function findWhere(array $where, array $columns = ['*']): \Illuminate\Support\Collection;
+    public function findWhereIn(string $field, array $where, array $columns = ['*']): \Illuminate\Support\Collection;
+    public function findWhereNotIn(string $field, array $where, array $columns = ['*']): \Illuminate\Support\Collection;
+    public function findWhereBetween(string $field, array $where, array $columns = ['*']): \Illuminate\Support\Collection;
+    public function create(array $attributes): mixed;
+    public function update(array $attributes, mixed $id): mixed;
+    public function updateOrCreate(array $attributes, array $values = []): mixed;
+    public function delete(mixed $id): bool;
+    public function deleteWhere(array $where): int;
+    public function orderBy(string $column, string $direction = 'asc'): static;
+    public function with(array $relations): static;
+    public function has(string $relation): static;
+    public function whereHas(string $relation, Closure $closure): static;
+    public function hidden(array $fields): static;
+    public function visible(array $fields): static;
+    public function scopeQuery(Closure $scope): static;
+    public function getFieldsSearchable(): array;
+    public function setPresenter(mixed $presenter): static;
+    public function skipPresenter(bool $status = true): static;
 }

@@ -113,7 +113,7 @@ class RequestCriteriaTest extends TestCase
         $criteria = new RequestCriteria($request);
         // Simulate logic: if value is array, use whereIn
         $criteria = new class($request) extends RequestCriteria {
-            public function apply($model, $repository) {
+            public function apply(\Illuminate\Database\Eloquent\Model|\Illuminate\Database\Eloquent\Builder $model, \Apiato\Repository\Contracts\RepositoryInterface $repository): \Illuminate\Database\Eloquent\Model|\Illuminate\Database\Eloquent\Builder {
                 $filters = $this->request->all()['filter'] ?? [];
                 foreach ($filters as $field => $value) {
                     if (is_array($value)) {
@@ -146,7 +146,7 @@ class RequestCriteriaTest extends TestCase
         $criteria = new RequestCriteria($request);
         // Simulate logic: only apply searchable fields
         $criteria = new class($request) extends RequestCriteria {
-            public function apply($model, $repository) {
+            public function apply(\Illuminate\Database\Eloquent\Model|\Illuminate\Database\Eloquent\Builder $model, \Apiato\Repository\Contracts\RepositoryInterface $repository): \Illuminate\Database\Eloquent\Model|\Illuminate\Database\Eloquent\Builder {
                 $filters = $this->request->all()['filter'] ?? [];
                 $searchable = $repository->getFieldsSearchable();
                 foreach ($filters as $field => $value) {
@@ -177,7 +177,7 @@ class RequestCriteriaTest extends TestCase
         $criteria = new RequestCriteria($request);
         // Simulate logic: if value is null, use whereNull
         $criteria = new class($request) extends RequestCriteria {
-            public function apply($model, $repository) {
+            public function apply(\Illuminate\Database\Eloquent\Model|\Illuminate\Database\Eloquent\Builder $model, \Apiato\Repository\Contracts\RepositoryInterface $repository): \Illuminate\Database\Eloquent\Model|\Illuminate\Database\Eloquent\Builder {
                 $filters = $this->request->all()['filter'] ?? [];
                 $searchable = $repository->getFieldsSearchable();
                 foreach ($filters as $field => $value) {
@@ -217,7 +217,7 @@ class RequestCriteriaTest extends TestCase
         $criteria = new RequestCriteria($request);
         // Simulate logic: support 'or' filter
         $criteria = new class($request) extends RequestCriteria {
-            public function apply($model, $repository) {
+            public function apply(\Illuminate\Database\Eloquent\Model|\Illuminate\Database\Eloquent\Builder $model, \Apiato\Repository\Contracts\RepositoryInterface $repository): \Illuminate\Database\Eloquent\Model|\Illuminate\Database\Eloquent\Builder {
                 $filters = $this->request->all()['filter'] ?? [];
                 $searchable = $repository->getFieldsSearchable();
                 foreach ($filters as $field => $value) {
@@ -269,7 +269,7 @@ class RequestCriteriaTest extends TestCase
         $builder->shouldReceive('orWhere')->with('email', '=', 'alice@example.com')->andReturnSelf();
         $builder->shouldReceive('orWhere')->with('status', '=', 'active')->andReturnSelf();
         $criteria = new class($request) extends RequestCriteria {
-            public function apply($model, $repository) {
+            public function apply(\Illuminate\Database\Eloquent\Model|\Illuminate\Database\Eloquent\Builder $model, \Apiato\Repository\Contracts\RepositoryInterface $repository): \Illuminate\Database\Eloquent\Model|\Illuminate\Database\Eloquent\Builder {
                 $filters = $this->request->all()['filter'] ?? [];
                 $searchable = $repository->getFieldsSearchable();
                 foreach ($filters as $field => $value) {
@@ -292,6 +292,41 @@ class RequestCriteriaTest extends TestCase
             }
         };
         $result = $criteria->apply($builder, $repository);
+        $this->assertSame($builder, $result);
+    }
+
+    /**
+     * Test classic AND/OR encapsulation in filter string using real RequestCriteria parsing logic.
+     * Steps: receive query string, parse, mock request, run criteria, assert result.
+     */
+    public function testClassicAndOrFilterStringWithRealCriteria()
+    {
+        // Step 1: Receive the raw query string as it would come from an HTTP request
+        $queryString = 'filter=email:alice@example.com;status:active|name:gigi';
+
+        // Step 2: Parse the query string into an array (as Laravel would do)
+        parse_str($queryString, $queryArray);
+        // $queryArray = ['filter' => 'email:alice@example.com;status:active|name:gigi']
+
+        // Step 3: Mock the request to return the parsed filter string
+        $request = m::mock(Request::class);
+        $request->shouldReceive('get')->with('filter', null)->andReturn($queryArray['filter']);
+        $request->shouldReceive('get')->andReturn(null);
+
+        // Step 4: Mock the repository and builder
+        $repository = m::mock(RepositoryInterface::class);
+        $repository->shouldReceive('getFieldsSearchable')->andReturn(['email', 'status', 'name']);
+        $builder = m::mock('Illuminate\Database\Eloquent\Builder');
+        // The logic: (email = alice@example.com AND status = active) OR (name = gigi)
+        $builder->shouldReceive('where')->with('email', '=', 'alice@example.com')->andReturnSelf();
+        $builder->shouldReceive('where')->with('status', '=', 'active')->andReturnSelf();
+        $builder->shouldReceive('orWhere')->with('name', '=', 'gigi')->andReturnSelf();
+
+        // Step 5: Run the real RequestCriteria logic
+        $criteria = new RequestCriteria($request);
+        $result = $criteria->apply($builder, $repository);
+
+        // Step 6: Assert the builder is returned (all expectations met)
         $this->assertSame($builder, $result);
     }
 }

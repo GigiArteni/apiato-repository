@@ -3,6 +3,8 @@
 namespace Apiato\Repository\Criteria;
 
 use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Apiato\Repository\Contracts\CriteriaInterface;
 use Apiato\Repository\Contracts\RepositoryInterface;
 
@@ -19,7 +21,12 @@ class RequestCriteria implements CriteriaInterface
         $this->request = $request ?? app('request');
     }
 
-    public function apply($model, RepositoryInterface $repository)
+    /**
+     * @param Model|Builder $model
+     * @param RepositoryInterface $repository
+     * @return Model|Builder
+     */
+    public function apply(Model|Builder $model, RepositoryInterface $repository): Model|Builder
     {
         $fieldsSearchable = $repository->getFieldsSearchable();
         $search = $this->request->get(config('repository.criteria.params.search', 'search'), null);
@@ -28,23 +35,18 @@ class RequestCriteria implements CriteriaInterface
         $orderBy = $this->request->get(config('repository.criteria.params.orderBy', 'orderBy'), null);
         $sortedBy = $this->request->get(config('repository.criteria.params.sortedBy', 'sortedBy'), 'asc');
         $with = $this->request->get(config('repository.criteria.params.with', 'with'), null);
-        
-        // Check if enhanced search is enabled
+
         $enhancedSearch = config('repository.apiato.features.enhanced_search', true);
         $forceEnhanced = $this->request->get('enhanced', false);
 
-        // Apply relationships
         if ($with) {
-            $with = is_string($with) ? explode(',', $with) : $with;
+            $with = is_string($with) ? explode(',', $with) : (array)$with;
             $model = $model->with($with);
         }
 
-        // Apply search (enhanced or basic)
         if ($search && is_array($fieldsSearchable) && count($fieldsSearchable)) {
-            // PATCH: skip array search values
             if (is_array($search)) {
-                // If search is an array, skip or flatten as appropriate
-                // For now, skip to avoid TypeError
+                // skip array search values
             } elseif (($enhancedSearch || $forceEnhanced) && $this->shouldUseEnhancedSearch($search)) {
                 $model = $this->applyEnhancedSearch($model, $search, $fieldsSearchable, $searchFields, $repository);
             } else {
@@ -52,12 +54,10 @@ class RequestCriteria implements CriteriaInterface
             }
         }
 
-        // Apply filters
         if ($filter && is_array($fieldsSearchable) && count($fieldsSearchable)) {
             $model = $this->applyFilters($model, $filter, $fieldsSearchable, $repository);
         }
 
-        // Apply ordering
         if ($orderBy) {
             $model = $this->applyOrdering($model, $orderBy, $sortedBy);
         }
@@ -65,64 +65,50 @@ class RequestCriteria implements CriteriaInterface
         return $model;
     }
 
-    /**
-     * Determine if enhanced search should be used
-     */
-    protected function shouldUseEnhancedSearch($search): bool
+    protected function shouldUseEnhancedSearch(string $search): bool
     {
-        // Use enhanced search for:
-        // 1. Quoted phrases: "john smith"
-        // 2. Boolean operators: +required -excluded
-        // 3. Fuzzy operators: word~2
-        // 4. Multi-word searches without field specification
-        if (!is_string($search)) {
-            return false;
-        }
-        return preg_match('/["+~-]|^[^:]*\s+[^:]*$/', $search);
+        return (bool)preg_match('/["+~-]|^[^:]*\s+[^:]*$/', $search);
     }
 
     /**
-     * Apply enhanced search with advanced features
+     * @param Model|Builder $model
+     * @param string $search
+     * @param array<string, string> $fieldsSearchable
+     * @param array<int, string>|null $searchFields
+     * @param RepositoryInterface $repository
+     * @return Model|Builder
      */
-    protected function applyEnhancedSearch($model, $search, $fieldsSearchable, $searchFields, $repository)
+    protected function applyEnhancedSearch(Model|Builder $model, string $search, array $fieldsSearchable, array $searchFields = null, RepositoryInterface $repository): Model|Builder
     {
-        // Parse enhanced search query
         $searchTerms = $this->parseEnhancedSearch($search);
-        
         return $model->where(function($query) use ($searchTerms, $fieldsSearchable, $repository) {
             $this->buildEnhancedQuery($query, $searchTerms, $fieldsSearchable, $repository);
         });
     }
 
     /**
-     * Parse enhanced search query into structured terms
+     * @param string $search
+     * @return array<string, array<int, mixed>>
      */
-    protected function parseEnhancedSearch($search): array
+    protected function parseEnhancedSearch(string $search): array
     {
         $terms = [
-            'required' => [],    // +term or "quoted phrase"
-            'excluded' => [],    // -term
-            'optional' => [],    // regular terms
-            'fuzzy' => [],       // term~distance
-            'phrases' => []      // "exact phrases"
+            'required' => [],
+            'excluded' => [],
+            'optional' => [],
+            'fuzzy' => [],
+            'phrases' => []
         ];
-
-        // Extract quoted phrases first
         preg_match_all('/"([^"]+)"/', $search, $phrases);
         foreach ($phrases[1] as $phrase) {
             $terms['phrases'][] = trim($phrase);
             $search = str_replace('"' . $phrase . '"', '', $search);
         }
-
-        // Extract operators and terms
         preg_match_all('/([+\-]?)(\w+(?:~\d+)?)/', $search, $matches, PREG_SET_ORDER);
-        
         foreach ($matches as $match) {
             $operator = $match[1];
             $term = $match[2];
             if (empty($term)) continue;
-
-            // Check for fuzzy search (word~2)
             if (preg_match('/(\w+)~(\d+)/', $term, $fuzzyMatch)) {
                 $terms['fuzzy'][] = [
                     'term' => $fuzzyMatch[1],
@@ -136,48 +122,39 @@ class RequestCriteria implements CriteriaInterface
                 $terms['optional'][] = $term;
             }
         }
-
         return $terms;
     }
 
     /**
-     * Build enhanced query with relevance scoring
+     * @param mixed $query
+     * @param array<string, array<int, mixed>> $searchTerms
+     * @param array<string, string> $fieldsSearchable
+     * @param RepositoryInterface $repository
+     * @return void
      */
-    protected function buildEnhancedQuery($query, $searchTerms, $fieldsSearchable, $repository)
+    protected function buildEnhancedQuery($query, array $searchTerms, array $fieldsSearchable, RepositoryInterface $repository): void
     {
         $relevanceSelects = [];
         $relevanceScore = 0;
-
-        // Get searchable fields
         $searchableFields = $this->getSearchableFieldNames($fieldsSearchable);
-
-        // Required terms (must match)
         foreach ($searchTerms['required'] as $term) {
             $query->where(function($subQuery) use ($term, $searchableFields, $repository) {
                 $this->applyTermToFields($subQuery, $term, $searchableFields, 'or', $repository);
             });
         }
-
-        // Excluded terms (must not match)
         foreach ($searchTerms['excluded'] as $term) {
             $query->whereNot(function($subQuery) use ($term, $searchableFields, $repository) {
                 $this->applyTermToFields($subQuery, $term, $searchableFields, 'or', $repository);
             });
         }
-
-        // Exact phrases (high relevance)
         foreach ($searchTerms['phrases'] as $phrase) {
             $query->where(function($subQuery) use ($phrase, $searchableFields, $repository) {
                 $this->applyTermToFields($subQuery, $phrase, $searchableFields, 'or', $repository, '=');
             });
-            
-            // Add relevance scoring for phrases
             foreach ($searchableFields as $field) {
                 $relevanceSelects[] = "CASE WHEN {$field} LIKE '%{$phrase}%' THEN 10 ELSE 0 END";
             }
         }
-
-        // Optional terms (boost relevance)
         if (!empty($searchTerms['optional'])) {
             $query->where(function($subQuery) use ($searchTerms, $searchableFields, $repository) {
                 foreach ($searchTerms['optional'] as $term) {
@@ -186,34 +163,25 @@ class RequestCriteria implements CriteriaInterface
                     });
                 }
             });
-
-            // Add relevance scoring for optional terms
             foreach ($searchTerms['optional'] as $term) {
                 foreach ($searchableFields as $field) {
                     $relevanceSelects[] = "CASE WHEN {$field} LIKE '%{$term}%' THEN 5 ELSE 0 END";
                 }
             }
         }
-
-        // Fuzzy matching (using SOUNDEX or LEVENSHTEIN if available)
         foreach ($searchTerms['fuzzy'] as $fuzzyTerm) {
             $term = $fuzzyTerm['term'];
             $distance = $fuzzyTerm['distance'];
-            
             $query->orWhere(function($subQuery) use ($term, $searchableFields, $repository) {
                 if (function_exists('soundex')) {
-                    // Use SOUNDEX for fuzzy matching
                     foreach ($searchableFields as $field) {
                         $subQuery->orWhereRaw("SOUNDEX({$field}) = SOUNDEX(?)", [$term]);
                     }
                 } else {
-                    // Fallback to similar LIKE patterns
                     $this->applyTermToFields($subQuery, $term, $searchableFields, 'or', $repository);
                 }
             });
         }
-
-        // Add relevance scoring if we have selects
         if (!empty($relevanceSelects)) {
             $relevanceFormula = '(' . implode(' + ', $relevanceSelects) . ') as relevance_score';
             $query->selectRaw('*, ' . $relevanceFormula);
@@ -222,20 +190,23 @@ class RequestCriteria implements CriteriaInterface
     }
 
     /**
-     * Apply a search term to multiple fields
+     * @param mixed $query
+     * @param string $term
+     * @param array<int, string> $fields
+     * @param string $operator
+     * @param RepositoryInterface|null $repository
+     * @param string $condition
+     * @return void
      */
-    protected function applyTermToFields($query, $term, $fields, $operator = 'or', $repository = null, $condition = 'like')
+    protected function applyTermToFields($query, string $term, array $fields, string $operator = 'or', ?RepositoryInterface $repository = null, string $condition = 'like'): void
     {
         foreach ($fields as $field) {
             $value = $condition === 'like' ? "%{$term}%" : $term;
-            
-            // Handle HashId fields
-            if ($this->isIdField($field) && $repository && method_exists($repository, 'processIdValue')) {
-                $processedValue = $repository->processIdValue($term);
-                $value = $condition === 'like' ? "%{$processedValue}%" : $processedValue;
+            if ($this->isIdField($field) && $repository /* && method_exists($repository, 'processIdValue') */) {
+                // HashId support removed; skip processIdValue
+                // $processedValue = $repository->processIdValue($term);
+                // $value = $condition === 'like' ? "%{$processedValue}%" : $processedValue;
             }
-
-            // Handle relationships
             if (strpos($field, '.') !== false) {
                 $this->applyRelationshipSearch($query, $field, $value, $condition, $operator);
             } else {
@@ -249,28 +220,31 @@ class RequestCriteria implements CriteriaInterface
     }
 
     /**
-     * Apply relationship search
+     * @param mixed $query
+     * @param string $field
+     * @param mixed $value
+     * @param string $condition
+     * @param string $operator
+     * @return void
      */
-    protected function applyRelationshipSearch($query, $field, $value, $condition, $operator)
+    protected function applyRelationshipSearch($query, string $field, mixed $value, string $condition, string $operator): void
     {
         $parts = explode('.', $field);
         $relation = array_shift($parts);
         $relationField = implode('.', $parts);
-
         $method = $operator === 'or' ? 'orWhereHas' : 'whereHas';
-        
         $query->$method($relation, function($relationQuery) use ($relationField, $value, $condition) {
             $relationQuery->where($relationField, $condition === 'like' ? 'LIKE' : '=', $value);
         });
     }
 
     /**
-     * Get field names from searchable configuration
+     * @param array<string, string> $fieldsSearchable
+     * @return array<int, string>
      */
-    protected function getSearchableFieldNames($fieldsSearchable): array
+    protected function getSearchableFieldNames(array $fieldsSearchable): array
     {
         $fields = [];
-        
         foreach ($fieldsSearchable as $key => $value) {
             if (is_numeric($key)) {
                 $fields[] = $value;
@@ -278,64 +252,53 @@ class RequestCriteria implements CriteriaInterface
                 $fields[] = $key;
             }
         }
-        
         return $fields;
     }
 
     /**
-     * Apply basic search (original functionality)
+     * @param Model|Builder $model
+     * @param string $search
+     * @param array<string, string> $fieldsSearchable
+     * @param array<int, string>|null $searchFields
+     * @param RepositoryInterface $repository
+     * @return Model|Builder
      */
-    protected function applyBasicSearch($model, $search, $fieldsSearchable, $searchFields, $repository)
+    protected function applyBasicSearch(Model|Builder $model, string $search, array $fieldsSearchable, array $searchFields = null, RepositoryInterface $repository): Model|Builder
     {
         $searchFields = is_array($searchFields) || is_null($searchFields) ? $searchFields : explode(';', $searchFields);
         $fields = $this->parserFieldsSearch($fieldsSearchable, $searchFields);
         $isFirstField = true;
         $searchData = $this->parserSearchData($search);
-        $search = $this->parserSearchValue($search);
-
+        $searchValue = $this->parserSearchValue($search);
         $modelForceAndWhere = strtolower($searchData->get('isForceAndWhere', 'or'));
-
-        // PATCH: filter $fields to only string keys
         $fields = array_filter($fields, 'is_string', ARRAY_FILTER_USE_KEY);
         foreach ($fields as $field => $condition) {
-            // PATCH: skip non-string field names
             if (!is_string($field)) continue;
             $value = null;
             $condition = trim(strtolower($condition));
-
             if (isset($searchData[$field])) {
                 $value = ($condition == "like" || $condition == "ilike") ? "%{$searchData[$field]}%" : $searchData[$field];
             } else {
-                if (!is_null($search) && !empty($search)) {
-                    $value = ($condition == "like" || $condition == "ilike") ? "%{$search}%" : $search;
+                if (!is_null($searchValue) && !empty($searchValue)) {
+                    $value = ($condition == "like" || $condition == "ilike") ? "%{$searchValue}%" : $searchValue;
                 }
             }
-
             if ($value) {
-                // Process HashIds for ID fields using Apiato's service
-                if ($this->isIdField($field) && method_exists($repository, 'processIdValue') && config('repository.apiato.hashids.decode_search', true)) {
-                    if ($condition == "like" || $condition == "ilike") {
-                        $value = str_replace('%', '', $value);
-                        $value = $repository->processIdValue($value);
-                        $condition = "="; // Change to exact match for HashIds
-                    } else {
-                        $value = $repository->processIdValue($value);
-                    }
+                if ($this->isIdField($field) && /* method_exists($repository, 'processIdValue') && config('repository.apiato.hashids.decode_search', true) */ false) {
+                    // HashId support removed; skip processIdValue
+                    // $value = $repository->processIdValue($value);
+                    // $condition = "=";
                 } else {
-                    // Apply like conditions for non-ID fields
                     if ($condition == "like" || $condition == "ilike") {
                         $value = "%{$value}%";
                     }
                 }
-
                 $relation = null;
-                // PATCH: only call stripos if $field is string (already checked above)
                 if (stripos($field, '.')) {
                     $explodeField = explode('.', $field);
                     $field = array_pop($explodeField);
                     $relation = implode('.', $explodeField);
                 }
-
                 $modelTableName = $model->getModel()->getTable();
                 if ($isFirstField || $modelForceAndWhere == 'and') {
                     if (!is_null($relation)) {
@@ -360,18 +323,17 @@ class RequestCriteria implements CriteriaInterface
         return $model;
     }
 
-    /**
-     * Check if field is an ID field
-     */
     protected function isIdField(string $field): bool
     {
         return $field === 'id' || str_ends_with($field, '_id');
     }
 
-    // Include all the other helper methods from the original RequestCriteria
-    // (parserFieldsSearch, parserSearchData, parserSearchValue, applyFilters, applyOrdering, etc.)
-    
-    protected function parserFieldsSearch(array $fields = [], array $searchFields = null)
+    /**
+     * @param array<string, string> $fields
+     * @param array<int, string>|null $searchFields
+     * @return array<string, string>
+     */
+    protected function parserFieldsSearch(array $fields = [], ?array $searchFields = null): array
     {
         if (!is_null($searchFields) && count($searchFields)) {
             $acceptedConditions = config('repository.criteria.acceptedConditions', [
@@ -379,13 +341,10 @@ class RequestCriteria implements CriteriaInterface
             ]);
             $originalFields = $fields;
             $fields = [];
-
             foreach ($searchFields as $index => $field) {
-                // PATCH: skip array field names
                 if (is_array($field)) continue;
                 $field_parts = explode(':', $field);
                 $temporaryIndex = array_search($field_parts[0], $originalFields);
-
                 if (count($field_parts) == 2) {
                     if (in_array($field_parts[1], $acceptedConditions)) {
                         unset($originalFields[$temporaryIndex]);
@@ -393,21 +352,19 @@ class RequestCriteria implements CriteriaInterface
                     }
                 }
             }
-
             if (count($fields) == 0) {
                 throw new \Exception('None of the search fields were accepted. Accepted conditions: ' . implode(',', $acceptedConditions));
             }
         }
-
         return $fields;
     }
 
-    protected function parserSearchData($search)
+    /**
+     * @param string $search
+     * @return \Illuminate\Support\Collection<string, mixed>
+     */
+    protected function parserSearchData(string $search): \Illuminate\Support\Collection
     {
-        // PATCH: skip non-string $search
-        if (!is_string($search)) {
-            return collect([]);
-        }
         $searchData = [];
         if (stripos($search, ':')) {
             $fields = explode(';', $search);
@@ -423,60 +380,108 @@ class RequestCriteria implements CriteriaInterface
         return collect($searchData);
     }
 
-    protected function parserSearchValue($search)
+    /**
+     * @param string $search
+     * @return string|null
+     */
+    protected function parserSearchValue(string $search): ?string
     {
-        // PATCH: skip non-string $search
-        if (!is_string($search)) {
-            return null;
-        }
         return stripos($search, ';') || stripos($search, ':') ? null : $search;
     }
 
-    protected function applyFilters($model, $filter, $fieldsSearchable, $repository)
+    /**
+     * @param Model|Builder $model
+     * @param string|array $filter
+     * @param array<string, string> $fieldsSearchable
+     * @param RepositoryInterface $repository
+     * @return Model|Builder
+     */
+    protected function applyFilters(Model|Builder $model, string|array $filter, array $fieldsSearchable, RepositoryInterface $repository): Model|Builder
     {
         $fields = $this->parserFieldsSearch($fieldsSearchable, null);
-        $filterData = $this->parserSearchData($filter);
-
-        foreach ($filterData as $field => $value) {
-            if (array_key_exists($field, $fields)) {
-                $condition = $fields[$field];
-                if (is_numeric($condition)) {
-                    $condition = "=";
-                }
-
-                // PATCH: skip array values for string-only operations
-                if (is_array($value)) {
-                    // If the condition is '=', treat as whereIn, else skip
-                    if ($condition === '=') {
-                        $model = $model->whereIn($field, $value);
+        // Support both classic (string) and array-style (array) filter syntaxes
+        if (is_string($filter)) {
+            // Classic AND/OR encapsulation: email:alice@example.com;status:active|name:gigi
+            $orGroups = explode('|', $filter);
+            $isFirstGroup = true;
+            foreach ($orGroups as $group) {
+                $andParts = explode(';', $group);
+                foreach ($andParts as $part) {
+                    if (strpos($part, ':') === false) continue;
+                    [$field, $value] = explode(':', $part, 2);
+                    $field = trim($field);
+                    $value = trim($value);
+                    if (!array_key_exists($field, $fields)) continue;
+                    $condition = $fields[$field] ?? '=';
+                    if (is_numeric($condition)) {
+                        $condition = '=';
                     }
-                    continue;
+                    if ($isFirstGroup) {
+                        $model = $model->where($field, $condition, $value);
+                    } else {
+                        $model = $model->orWhere($field, $condition, $value);
+                    }
                 }
-
-                if ($this->isIdField($field) && method_exists($repository, 'processIdValue') && config('repository.apiato.hashids.decode_filters', true)) {
-                    $value = $repository->processIdValue($value);
+                $isFirstGroup = false;
+            }
+            return $model;
+        } elseif (is_array($filter)) {
+            $filterData = collect($filter);
+        } else {
+            $filterData = collect();
+        }
+        foreach ($filterData as $field => $value) {
+            // Support relationship fields (e.g., roles.name)
+            $isRelationship = strpos($field, '.') !== false;
+            $condition = $fields[$field] ?? '=';
+            if (is_numeric($condition)) {
+                $condition = '=';
+            }
+            if (is_array($value)) {
+                if ($isRelationship) {
+                    $parts = explode('.', $field);
+                    $relation = array_shift($parts);
+                    $relationField = implode('.', $parts);
+                    $model = $model->whereHas($relation, function ($query) use ($relationField, $value) {
+                        $query->whereIn($relationField, $value);
+                    });
+                } else {
+                    $model = $model->whereIn($field, $value);
                 }
-
+                continue;
+            }
+            if ($isRelationship) {
+                $parts = explode('.', $field);
+                $relation = array_shift($parts);
+                $relationField = implode('.', $parts);
+                $model = $model->whereHas($relation, function ($query) use ($relationField, $condition, $value) {
+                    $query->where($relationField, $condition, $value);
+                });
+            } else {
                 $model = $model->where($field, $condition, $value);
             }
         }
-
         return $model;
     }
 
-    protected function applyOrdering($model, $orderBy, $sortedBy)
+    /**
+     * @param Model|Builder $model
+     * @param string $orderBy
+     * @param string $sortedBy
+     * @return Model|Builder
+     */
+    protected function applyOrdering(Model|Builder $model, string $orderBy, string $sortedBy): Model|Builder
     {
         $orderBySplit = explode(',', $orderBy);
         if (count($orderBySplit) > 1) {
             $sortedBySplit = explode(',', $sortedBy);
             foreach ($orderBySplit as $orderBySplitItemKey => $orderBySplitItem) {
-                $sortedBy = isset($sortedBySplit[$orderBySplitItemKey]) ? $sortedBySplit[$orderBySplitItemKey] : $sortedBySplit[0];
-                $model = $model->orderBy(trim($orderBySplitItem), trim($sortedBy));
+                $sortedByValue = isset($sortedBySplit[$orderBySplitItemKey]) ? $sortedBySplit[$orderBySplitItemKey] : $sortedBySplit[0];
+                $model = $model->orderBy(trim($orderBySplitItem), trim($sortedByValue));
             }
         } else {
             $model = $model->orderBy($orderBy, $sortedBy);
         }
-
         return $model;
     }
 }

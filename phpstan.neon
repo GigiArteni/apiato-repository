@@ -1,4 +1,12 @@
 parameters:
-    level: 5
-    paths:
-        - src
+  level: max
+  paths:
+    - src
+    - tests
+  excludePaths:
+    - vendor
+  checkMissingIterableValueType: true
+  checkGenericClassInNonGenericObjectType: true
+  checkUnionTypes: true
+  checkExplicitMixed: true
+  checkFunctionNameCase: true

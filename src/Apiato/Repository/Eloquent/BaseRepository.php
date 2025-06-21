@@ -30,17 +30,35 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
     protected Application $app;
     protected Model $model;
     /**
-     * @var \Illuminate\Database\Eloquent\Builder|\Illuminate\Database\Query\Builder|null
+     * @var Builder|null
      */
-    protected $query = null;
+    protected ?Builder $query = null;
     protected ?ValidatorInterface $validator = null;
     protected ?Closure $scopeQuery = null;
+    /**
+     * @var Collection<int, CriteriaInterface>
+     */
     protected Collection $criteria;
     protected bool $skipCriteria = false;
+    /**
+     * @var array<string, string>
+     */
     protected array $fieldSearchable = [];
+    /**
+     * @var array<int, string>
+     */
     protected array $with = [];
+    /**
+     * @var array<int, string>
+     */
     protected array $hidden = [];
+    /**
+     * @var array<int, string>
+     */
     protected array $visible = [];
+    /**
+     * @var array<string, mixed>|null
+     */
     protected ?array $rules = null;
 
     public function __construct(Application $app)
@@ -56,7 +74,7 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
      * Boot method for repository initialization
      * Override in child classes for custom setup
      */
-    public function boot()
+    public function boot(): void
     {
         // Can be overridden in child classes
     }
@@ -65,19 +83,18 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
      * Specify Model class name
      * Must be implemented in child classes
      */
-    abstract public function model();
+    abstract public function model(): string;
 
     /**
      * Create model instance
      */
-    public function makeModel()
+    public function makeModel(): Model
     {
         $model = $this->app->make($this->model());
 
         if (!$model instanceof Model) {
             throw new RepositoryException("Class {$this->model()} must be an instance of Illuminate\\Database\\Eloquent\\Model");
         }
-
         $this->query = null; // Reset query builder
         return $this->model = $model;
     }
@@ -86,7 +103,7 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
     // CORE REPOSITORY METHODS
     // ========================================
 
-    public function all($columns = ['*'])
+    public function all(array $columns = ['*']): \Illuminate\Support\Collection
     {
         $this->applyCriteria();
         $this->applyScope();
@@ -96,7 +113,7 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         return $results;
     }
 
-    public function first($columns = ['*'])
+    public function first(array $columns = ['*']): mixed
     {
         $this->applyCriteria();
         $this->applyScope();
@@ -106,7 +123,7 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         return $results;
     }
 
-    public function paginate($limit = null, $columns = ['*'])
+    public function paginate(int $limit = null, array $columns = ['*']): mixed
     {
         $this->applyCriteria();
         $this->applyScope();
@@ -116,7 +133,7 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         return $results;
     }
 
-    public function find($id, $columns = ['*'])
+    public function find(mixed $id, array $columns = ['*']): mixed
     {
         $this->applyCriteria();
         $this->applyScope();
@@ -125,7 +142,7 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         return $model;
     }
 
-    public function findByField($field, $value, $columns = ['*'])
+    public function findByField(string $field, mixed $value, array $columns = ['*']): \Illuminate\Support\Collection
     {
         $this->applyCriteria();
         $this->applyScope();
@@ -134,7 +151,7 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         return $model;
     }
 
-    public function findWhere(array $where, $columns = ['*'])
+    public function findWhere(array $where, array $columns = ['*']): \Illuminate\Support\Collection
     {
         $this->applyCriteria();
         $this->applyScope();
@@ -152,7 +169,7 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         return $model;
     }
 
-    public function findWhereIn($field, array $where, $columns = ['*'])
+    public function findWhereIn(string $field, array $where, array $columns = ['*']): \Illuminate\Support\Collection
     {
         $this->applyCriteria();
         $this->applyScope();
@@ -161,7 +178,7 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         return $model;
     }
 
-    public function findWhereNotIn($field, array $where, $columns = ['*'])
+    public function findWhereNotIn(string $field, array $where, array $columns = ['*']): \Illuminate\Support\Collection
     {
         $this->applyCriteria();
         $this->applyScope();
@@ -170,7 +187,7 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         return $model;
     }
 
-    public function findWhereBetween($field, array $where, $columns = ['*'])
+    public function findWhereBetween(string $field, array $where, array $columns = ['*']): \Illuminate\Support\Collection
     {
         $this->applyCriteria();
         $this->applyScope();
@@ -179,24 +196,21 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         return $model;
     }
 
-    public function create(array $attributes)
+    public function create(array $attributes): mixed
     {
         if (!is_null($this->validator)) {
             $this->validator->with($attributes);
-            
             if (!$this->validator->passesCreate()) {
                 throw new \Exception('Validation failed: ' . json_encode($this->validator->errors()));
             }
         }
-
         $model = $this->model->newInstance($attributes);
         $model->save();
         $this->resetModel();
-
         return $model;
     }
 
-    public function update(array $attributes, $id)
+    public function update(array $attributes, mixed $id): mixed
     {
         $this->applyCriteria();
         $this->applyScope();
@@ -213,7 +227,7 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         return $model;
     }
 
-    public function updateOrCreate(array $attributes, array $values = [])
+    public function updateOrCreate(array $attributes, array $values = []): mixed
     {
         $this->applyCriteria();
         $this->applyScope();
@@ -222,7 +236,7 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         return $model;
     }
 
-    public function delete($id)
+    public function delete(mixed $id): bool
     {
         $this->applyCriteria();
         $this->applyScope();
@@ -230,10 +244,10 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         $this->resetModel();
         $originalModel = clone $model;
         $deleted = $originalModel->delete();
-        return $deleted;
+        return (bool)$deleted;
     }
 
-    public function deleteWhere(array $where)
+    public function deleteWhere(array $where): int
     {
         $this->applyCriteria();
         $this->applyScope();
@@ -248,32 +262,32 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         }
         $deleted = $query->delete();
         $this->resetModel();
-        return $deleted;
+        return (int)$deleted;
     }
 
     // ========================================
     // QUERY BUILDER METHODS
     // ========================================
 
-    public function with(array $relations)
+    public function with(array $relations): static
     {
         $this->query = $this->getQuery()->with($relations);
         return $this;
     }
 
-    public function has(string $relation)
+    public function has(string $relation): static
     {
         $this->query = $this->getQuery()->has($relation);
         return $this;
     }
 
-    public function whereHas(string $relation, Closure $closure)
+    public function whereHas(string $relation, Closure $closure): static
     {
         $this->query = $this->getQuery()->whereHas($relation, $closure);
         return $this;
     }
 
-    public function orderBy($column, $direction = 'asc')
+    public function orderBy(string $column, string $direction = 'asc'): static
     {
         $this->query = $this->getQuery()->orderBy($column, $direction);
         return $this;
@@ -283,29 +297,27 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
     // IMPLEMENTATION METHODS
     // ========================================
 
-    public function makeValidator()
+    public function makeValidator(): void
     {
         $validator = $this->validator();
 
         if (!is_null($validator)) {
             $this->validator = is_string($validator) ? $this->app->make($validator) : $validator;
         }
-
-        return null;
     }
 
-    public function validator()
+    public function validator(): ValidatorInterface|null
     {
         return null;
     }
 
-    public function resetModel()
+    public function resetModel(): static
     {
         $this->makeModel();
         return $this;
     }
 
-    public function getModel()
+    public function getModel(): Model
     {
         return $this->model;
     }
@@ -314,62 +326,49 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
     // CRITERIA METHODS
     // ========================================
 
-    public function pushCriteria($criteria)
+    public function pushCriteria(CriteriaInterface $criteria): static
     {
-        if (is_string($criteria)) {
-            $criteria = new $criteria;
-        }
-        if (!$criteria instanceof CriteriaInterface) {
-            throw new RepositoryException("Class " . get_class($criteria) . " must be an instance of CriteriaInterface");
-        }
         $this->criteria->push($criteria);
         return $this;
     }
 
-    public function popCriteria($criteria)
+    public function popCriteria(CriteriaInterface $criteria): static
     {
         $this->criteria = $this->criteria->reject(function ($item) use ($criteria) {
-            if (is_object($item) && is_string($criteria)) {
-                return get_class($item) === $criteria;
-            }
-
-            if (is_string($item) && is_object($criteria)) {
-                return $item === get_class($criteria);
-            }
-
             return get_class($item) === get_class($criteria);
         });
-
         return $this;
     }
 
-    public function getCriteria()
+    /**
+     * @return Collection<int, CriteriaInterface>
+     */
+    public function getCriteria(): Collection
     {
         return $this->criteria;
     }
 
-    public function getByCriteria(CriteriaInterface $criteria)
+    public function getByCriteria(CriteriaInterface $criteria): array
     {
         $this->model = $criteria->apply($this->model, $this);
-        $results = $this->model->get();
+        $results = $this->model->get()->all();
         $this->resetModel();
-
         return $results;
     }
 
-    public function skipCriteria($status = true)
+    public function skipCriteria(bool $status = true): static
     {
         $this->skipCriteria = $status;
         return $this;
     }
 
-    public function clearCriteria()
+    public function clearCriteria(): static
     {
         $this->criteria = new Collection();
         return $this;
     }
 
-    public function applyCriteria()
+    public function applyCriteria(): static
     {
         if ($this->skipCriteria) {
             return $this;
@@ -383,7 +382,7 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         return $this;
     }
 
-    protected function applyScope()
+    protected function applyScope(): static
     {
         if (is_callable($this->scopeQuery)) {
             $callback = $this->scopeQuery;
@@ -392,13 +391,13 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         return $this;
     }
 
-    protected function resetScope()
+    protected function resetScope(): static
     {
         $this->scopeQuery = null;
         return $this;
     }
 
-    protected function applyConditions(array $where)
+    protected function applyConditions(array $where): void
     {
         $query = $this->getQuery();
         foreach ($where as $field => $value) {

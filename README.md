@@ -264,56 +264,57 @@ php artisan vendor:publish --tag=repository
 
 ---
 
-## 🔄 **Migration from l5-repository**
+## 🔄 **Migration Guide: l5-repository → Apiato Repository**
 
-### Update Your Imports
+### Feature Matrix
 
-**Before** (l5-repository):
-```php
-use Prettus\Repository\Eloquent\BaseRepository;
-use Prettus\Repository\Criteria\RequestCriteria;
-```
+| Feature                        | l5-repository         | Apiato Repository (this package) |
+|--------------------------------|-----------------------|-----------------------------------|
+| Core Repository Pattern        | ✅ Yes                | ✅ Yes                            |
+| Criteria Support               | ✅ Yes                | ✅ Yes                            |
+| Presenter/Transformer System   | ✅ Yes (Fractal)      | ❌ No (use Laravel resources)     |
+| Bulk Insert/Update/Upsert      | ❌ No                 | ✅ Yes (high-performance)         |
+| Smart Transactions             | ❌ Basic              | ✅ Advanced (deadlock retry, etc) |
+| Enhanced Search                | ❌ No                 | ✅ Optional (relevance, fuzzy)    |
+| HashId Integration             | ❌ No                 | ❌ No                             |
+| Middleware Support             | ❌ No                 | ❌ No                             |
+| Event System                   | ❌ No                 | ❌ No                             |
+| Data Sanitization              | ❌ No                 | ❌ No                             |
+| Generator Commands             | Many (all features)   | Minimal (repository, criteria)    |
+| PHP Version                    | 7.2+                  | 8.1+ (type-safe)                  |
+| Apiato v.13 Integration        | ❌ No                 | ✅ Yes                            |
 
-**After** (apiato/repository):
-```php
-use Apiato\Repository\Eloquent\BaseRepository;
-use Apiato\Repository\Criteria\RequestCriteria;
-```
+### Migration Steps
 
-### Your Repository Code Stays the Same
-
-```php
-<?php
-
-namespace App\Containers\User\Data\Repositories;
-
-use App\Containers\User\Models\User;
-use Apiato\Repository\Eloquent\BaseRepository;
-use Apiato\Repository\Criteria\RequestCriteria;
-
-class UserRepository extends BaseRepository
-{
-    public function model()
-    {
-        return User::class;
-    }
-
-    /**
-     * Specify fields that are searchable
-     */
-    protected $fieldSearchable = [
-        'name' => 'like',
-        'email' => '=',
-        'id' => '=',
-        'role_id' => '=',
-    ];
-
-    public function boot()
-    {
-        $this->pushCriteria(app(RequestCriteria::class));
-    }
-}
-```
+1. **Remove l5-repository:**
+   ```bash
+   composer remove prettus/l5-repository
+   ```
+2. **Install Apiato Repository:**
+   ```bash
+   composer require apiato/repository
+   ```
+3. **Update Imports:**
+   - Change:
+     ```php
+     use Prettus\Repository\Eloquent\BaseRepository;
+     use Prettus\Repository\Criteria\RequestCriteria;
+     ```
+   - To:
+     ```php
+     use Apiato\Repository\Eloquent\BaseRepository;
+     use Apiato\Repository\Criteria\RequestCriteria;
+     ```
+4. **Generators:**
+   - Use only:
+     ```bash
+     php artisan make:repository MyRepository
+     php artisan make:criteria MyCriteria
+     ```
+   - For transformers, use Laravel resources.
+5. **Remove/replace presenters, HashId, and event/middleware logic:**
+   - Refactor any code using these features to use Laravel or Apiato core equivalents.
+6. **Enjoy advanced bulk operations and smart transactions!**
 
 ---
 

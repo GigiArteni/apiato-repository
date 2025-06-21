@@ -18,7 +18,7 @@ trait CacheableRepository
     /**
      * Set Cache Repository
      */
-    public function setCacheRepository($repository)
+    public function setCacheRepository(object $repository): static
     {
         $this->cacheRepository = $repository;
         return $this;
@@ -27,7 +27,7 @@ trait CacheableRepository
     /**
      * Get Cache Repository
      */
-    public function getCacheRepository()
+    public function getCacheRepository(): ?object
     {
         return $this->cacheRepository ?? Cache::store();
     }
@@ -35,7 +35,7 @@ trait CacheableRepository
     /**
      * Get Cache Minutes
      */
-    public function getCacheMinutes()
+    public function getCacheMinutes(): int
     {
         return $this->cacheMinutes ?? config('repository.cache.minutes', 30);
     }
@@ -106,7 +106,7 @@ trait CacheableRepository
     /**
      * Enhanced cache key generation
      */
-    public function getCacheKey($method, $args = null)
+    public function getCacheKey(string $method, ?array $args = null): string
     {
         if (is_null($args)) {
             $args = [];

@@ -19,9 +19,13 @@ class MakeRepositoryCommand extends Command
         parent::__construct();
         $this->files = $files;
     }
-    public function handle()
+    public function handle(): bool
     {
         $name = $this->argument('name');
+        if (!is_string($name)) {
+            $this->error('Invalid repository name.');
+            return false;
+        }
         if (!Str::endsWith($name, 'Repository')) {
             $name .= 'Repository';
         }
@@ -37,24 +41,27 @@ class MakeRepositoryCommand extends Command
         $this->line("<info>Repository:</info> {$path}");
         return true;
     }
-    protected function getPath($name)
+    protected function getPath(string $name): string
     {
         $name = Str::replaceFirst($this->rootNamespace(), '', $name);
         return app_path(str_replace('\\', '/', $name) . '.php');
     }
-    protected function rootNamespace()
+    protected function rootNamespace(): string
     {
         return config('repository.generator.rootNamespace', 'App\\');
     }
-    protected function makeDirectory($path)
+    protected function makeDirectory(string $path): void
     {
         if (!$this->files->isDirectory(dirname($path))) {
             $this->files->makeDirectory(dirname($path), 0777, true, true);
         }
     }
-    protected function buildClass($name)
+    protected function buildClass(string $name): string
     {
         $modelName = $this->option('model') ?: Str::replaceLast('Repository', '', class_basename($name));
+        if (!is_string($modelName)) {
+            $modelName = 'Model';
+        }
         $modelClass = "App\\Models\\{$modelName}";
         $replacements = [
             '{{CLASS}}' => class_basename($name),
@@ -68,12 +75,12 @@ class MakeRepositoryCommand extends Command
             $this->getStub()
         );
     }
-    protected function getNamespace($name)
+    protected function getNamespace(string $name): string
     {
         return trim(implode('\\', array_slice(explode('\\', $name), 0, -1)), '\\');
     }
-    protected function getStub()
+    protected function getStub(): string
     {
-        return '<?php\n\nnamespace {{NAMESPACE}};\n\nuse Apiato\\Repository\\Eloquent\\BaseRepository;\nuse Apiato\\Repository\\Criteria\\RequestCriteria;\nuse {{MODEL_CLASS}};\n\n/**\n * Class {{CLASS}}\n * @package {{NAMESPACE}}\n */\nclass {{CLASS}} extends BaseRepository\n{\n    /**\n     * Specify Model class name\n     */\n    public function model()\n    {\n        return {{MODEL_CLASS}}::class;\n    }\n\n    /**\n     * Specify fields that are searchable\n     */\n    protected $fieldSearchable = [\n        // Add your searchable fields here\n        // \'name\' => \'like\',\n        // \'email\' => \'=\',\n        // \'id\' => \'=\',\n    ];\n\n    /**\n     * Boot up the repository, pushing criteria\n     */\n    public function boot()\n    {\n        $this->pushCriteria(app(RequestCriteria::class));\n    }\n}\n';
+        return '<?php\n\nnamespace {{NAMESPACE}};\n\nuse Apiato\\Repository\\Eloquent\\BaseRepository;\nuse Apiato\\Repository\\Criteria\\RequestCriteria;\nuse {{MODEL_CLASS}};\n\n/**\n * Class {{CLASS}}\n * @package {{NAMESPACE}}\n */\nclass {{CLASS}} extends BaseRepository\n{\n    /**\n     * Specify Model class name\n     */\n    public function model(): string\n    {\n        return {{MODEL_CLASS}}::class;\n    }\n\n    /**\n     * Specify fields that are searchable\n     */\n    protected array $fieldSearchable = [\n        // Add your searchable fields here\n        // \'name\' => \'like\',\n        // \'email\' => \'=\',\n        // \'id\' => \'=\',\n    ];\n\n    /**\n     * Boot up the repository, pushing criteria\n     */\n    public function boot(): void\n    {\n        $this->pushCriteria(app(RequestCriteria::class));\n    }\n}\n';
     }
 }

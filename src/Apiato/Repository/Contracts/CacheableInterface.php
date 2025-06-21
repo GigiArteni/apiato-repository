@@ -11,33 +11,33 @@ interface CacheableInterface
     /**
      * Set Cache Repository
      *
-     * @param mixed $repository
+     * @param object $repository
      * @return $this
      */
-    public function setCacheRepository($repository);
+    public function setCacheRepository(object $repository): static;
 
     /**
      * Get Cache Repository
      *
-     * @return mixed
+     * @return object|null
      */
-    public function getCacheRepository();
+    public function getCacheRepository(): object|null;
 
     /**
      * Get Cache Key
      *
      * @param string $method
-     * @param mixed $args
+     * @param array<int|string, mixed>|null $args
      * @return string
      */
-    public function getCacheKey($method, $args = null);
+    public function getCacheKey(string $method, array $args = null): string;
 
     /**
      * Get Cache Minutes
      *
      * @return int
      */
-    public function getCacheMinutes();
+    public function getCacheMinutes(): int;
 
     /**
      * Skip Cache
