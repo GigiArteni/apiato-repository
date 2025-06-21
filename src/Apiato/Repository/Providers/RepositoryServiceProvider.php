@@ -32,8 +32,6 @@ class RepositoryServiceProvider extends ServiceProvider
             $this->commands([
                 \Apiato\Repository\Generators\Commands\MakeRepositoryCommand::class,
                 \Apiato\Repository\Generators\Commands\MakeCriteriaCommand::class,
-                \Apiato\Repository\Generators\Commands\MakeValidatorCommand::class,
-                \Apiato\Repository\Generators\Commands\MakeTransformerCommand::class,
             ]);
         }
     }
@@ -43,8 +41,6 @@ class RepositoryServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->app->register(\Apiato\Repository\Providers\EventServiceProvider::class);
-        
         // Register core services
         $this->registerRepositoryServices();
         

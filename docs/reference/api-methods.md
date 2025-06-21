@@ -12,10 +12,9 @@ This document provides a **comprehensive, professional, and user-centric referen
 5. [Transactions & Error Handling](#transactions--error-handling)
 6. [Presenters & Transformers](#presenters--transformers)
 7. [Validation](#validation)
-8. [Events & Event Payloads](#events--event-payloads)
-9. [Contracts & Traits](#contracts--traits)
-10. [Real-World Usage Patterns](#real-world-usage-patterns)
-11. [Performance Tips](#performance-tips)
+8. [Contracts & Traits](#contracts--traits)
+9. [Real-World Usage Patterns](#real-world-usage-patterns)
+10. [Performance Tips](#performance-tips)
 
 ---
 
@@ -226,3 +225,7 @@ $repo->withTransaction()->bulkUpdate([...], ['status'=>'pending']);
 - [Events Reference](events.md)
 - [Configuration Reference](configuration.md)
 - [Real-World Examples](../guides/real-world-examples.md)
+
+---
+
+**Updated:** API reference to match simplified config, opt-in enhanced search, and removal of event system and extra generators. Only current features and minimal config are documented.

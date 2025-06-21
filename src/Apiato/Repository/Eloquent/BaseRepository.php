@@ -13,12 +13,6 @@ use Apiato\Repository\Contracts\CriteriaInterface;
 use Apiato\Repository\Contracts\RepositoryCriteriaInterface;
 use Apiato\Repository\Contracts\RepositoryInterface;
 use Apiato\Repository\Contracts\ValidatorInterface;
-use Apiato\Repository\Events\RepositoryCreated;
-use Apiato\Repository\Events\RepositoryCreating;
-use Apiato\Repository\Events\RepositoryDeleted;
-use Apiato\Repository\Events\RepositoryDeleting;
-use Apiato\Repository\Events\RepositoryUpdated;
-use Apiato\Repository\Events\RepositoryUpdating;
 use Apiato\Repository\Exceptions\RepositoryException;
 use Apiato\Repository\Traits\BulkOperations;
 use Apiato\Repository\Traits\CacheableRepository;
@@ -187,8 +181,6 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
 
     public function create(array $attributes)
     {
-        event(new RepositoryCreating($this, $attributes));
-
         if (!is_null($this->validator)) {
             $this->validator->with($attributes);
             
@@ -201,8 +193,6 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         $model->save();
         $this->resetModel();
 
-        event(new RepositoryCreated($this, $model));
-
         return $model;
     }
 
@@ -210,7 +200,6 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
     {
         $this->applyCriteria();
         $this->applyScope();
-        event(new RepositoryUpdating($this, $attributes));
         if (!is_null($this->validator)) {
             $this->validator->with($attributes);
             if (!$this->validator->passesUpdate()) {
@@ -221,7 +210,6 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         $model->fill($attributes);
         $model->save();
         $this->resetModel();
-        event(new RepositoryUpdated($this, $model));
         return $model;
     }
 
@@ -238,12 +226,10 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
     {
         $this->applyCriteria();
         $this->applyScope();
-        event(new RepositoryDeleting($this, $id));
         $model = $this->getQuery()->findOrFail($id);
         $this->resetModel();
         $originalModel = clone $model;
         $deleted = $originalModel->delete();
-        event(new RepositoryDeleted($this, $originalModel));
         return $deleted;
     }
 

@@ -90,10 +90,21 @@ return [
             'eager_loading_detection' => env('REPOSITORY_EAGER_LOADING_DETECTION', true),
         ],
         'features' => [
-            'enhanced_search' => env('REPOSITORY_ENHANCED_SEARCH', true),
+            'enhanced_search' => env('REPOSITORY_ENHANCED_SEARCH', false),
             'auto_cache_tags' => env('REPOSITORY_AUTO_CACHE_TAGS', true),
             'smart_relationships' => env('REPOSITORY_SMART_RELATIONSHIPS', true),
             'event_dispatching' => env('REPOSITORY_EVENT_DISPATCHING', true),
         ]
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Advanced Settings
+    |--------------------------------------------------------------------------
+    */
+    'advanced' => [
+        'bulk_chunk_size' => env('REPOSITORY_BULK_CHUNK_SIZE', 1000),
+        'use_transactions' => env('REPOSITORY_BULK_TRANSACTIONS', true),
+        'log_performance' => env('REPOSITORY_LOG_PERFORMANCE', false),
     ],
 ];

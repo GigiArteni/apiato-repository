@@ -19,7 +19,6 @@
 - ✅ **Enhanced Search**: Intelligent search with relevance scoring and fuzzy matching
 - ✅ **Enhanced Performance**: 40-80% faster operations with intelligent caching
 - ✅ **Modern PHP**: Built for PHP 8.1+ with full type safety
-- ✅ **Event-Driven**: Complete event system for repository lifecycle
 - ✅ **Auto-Configuration**: Zero-config setup for Apiato v.13 projects
 
 ### 📊 Performance Benchmarks
@@ -301,13 +300,12 @@ class UserRepository extends BaseRepository
 
     /**
      * Specify fields that are searchable
-     * ID fields automatically support HashIds!
      */
     protected $fieldSearchable = [
         'name' => 'like',
         'email' => '=',
-        'id' => '=', // ✨ Now automatically handles HashIds
-        'role_id' => '=', // ✨ HashIds work here too
+        'id' => '=',
+        'role_id' => '=',
     ];
 
     public function boot()
@@ -340,8 +338,8 @@ class UserRepository extends BaseRepository
     protected $fieldSearchable = [
         'name' => 'like',
         'email' => '=',
-        'id' => '=',          // HashIds supported
-        'company_id' => '=',  // HashIds supported
+        'id' => '=',
+        'company_id' => '=',
     ];
 
     /**
@@ -373,12 +371,9 @@ class UserService
     {
         return $this->userRepository
             ->transaction(function() use ($userData, $profileData) {
-                // Data automatically sanitized and HashIds decoded
                 $user = $this->userRepository->create($userData);
-                
                 $profileData['user_id'] = $user->id;
                 $profile = $this->profileRepository->create($profileData);
-                
                 return ['user' => $user, 'profile' => $profile];
             });
     }
@@ -428,9 +423,7 @@ class UserController
      */
     public function store(Request $request)
     {
-        // Sanitization and HashIds handled automatically
         $user = $this->userRepository->create($request->all());
-        
         return response()->json(['user' => $user]);
     }
 
@@ -456,9 +449,7 @@ class UserController
      */
     public function search(Request $request)
     {
-        // Enhanced search and HashIds handled automatically
         $users = $this->userRepository->paginate(25);
-            
         return response()->json($users);
     }
 }
@@ -523,33 +514,6 @@ return [
         'enabled' => env('REPOSITORY_BULK_OPERATIONS', true),
         'chunk_size' => env('REPOSITORY_BULK_CHUNK_SIZE', 1000),
         'use_transactions' => env('REPOSITORY_BULK_TRANSACTIONS', true),
-        'sanitize_data' => env('REPOSITORY_BULK_SANITIZE', true),
-        'validate_hashids' => env('REPOSITORY_BULK_VALIDATE_HASHIDS', true),
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Apiato v.13 Integration
-    |--------------------------------------------------------------------------
-    */
-    'apiato' => [
-        'hashids' => [
-            'enabled' => env('REPOSITORY_HASHIDS_ENABLED', true),
-            'auto_decode' => env('REPOSITORY_HASHIDS_AUTO_DECODE', true),
-            'decode_search' => env('REPOSITORY_HASHIDS_DECODE_SEARCH', true),
-            'decode_filters' => env('REPOSITORY_HASHIDS_DECODE_FILTERS', true),
-        ],
-        'performance' => [
-            'enhanced_caching' => env('REPOSITORY_ENHANCED_CACHE', true),
-            'query_optimization' => env('REPOSITORY_QUERY_OPTIMIZATION', true),
-            'eager_loading_detection' => env('REPOSITORY_EAGER_LOADING_DETECTION', true),
-        ],
-        'features' => [
-            'enhanced_search' => env('REPOSITORY_ENHANCED_SEARCH', true),
-            'auto_cache_tags' => env('REPOSITORY_AUTO_CACHE_TAGS', true),
-            'smart_relationships' => env('REPOSITORY_SMART_RELATIONSHIPS', true),
-            'event_dispatching' => env('REPOSITORY_EVENT_DISPATCHING', true),
-        ]
     ],
 ];
 ```
@@ -561,12 +525,6 @@ return [
 REPOSITORY_CACHE_ENABLED=true
 REPOSITORY_CACHE_MINUTES=30
 REPOSITORY_CACHE_CLEAN_ENABLED=true
-
-# HashId Integration
-REPOSITORY_HASHIDS_ENABLED=true
-REPOSITORY_HASHIDS_AUTO_DECODE=true
-REPOSITORY_HASHIDS_DECODE_SEARCH=true
-REPOSITORY_HASHIDS_DECODE_FILTERS=true
 
 # Database Transactions
 REPOSITORY_AUTO_TRANSACTION_BULK=true
@@ -580,42 +538,21 @@ REPOSITORY_RETRY_DELAY=100
 REPOSITORY_BULK_OPERATIONS=true
 REPOSITORY_BULK_CHUNK_SIZE=1000
 REPOSITORY_BULK_TRANSACTIONS=true
-REPOSITORY_BULK_SANITIZE=true
-REPOSITORY_BULK_VALIDATE_HASHIDS=true
-
-# Performance Features
-REPOSITORY_ENHANCED_CACHE=true
-REPOSITORY_QUERY_OPTIMIZATION=true
-REPOSITORY_EAGER_LOADING_DETECTION=true
-REPOSITORY_ENHANCED_SEARCH=true
-REPOSITORY_AUTO_CACHE_TAGS=true
-REPOSITORY_SMART_RELATIONSHIPS=true
-REPOSITORY_EVENT_DISPATCHING=true
 ```
 
 ---
 
 ## 🛠️ **Artisan Commands**
 
-The package provides a suite of generator commands:
+The package provides generator commands:
 
 ```bash
 # Generate Repository
 php artisan make:repository UserRepository
 php artisan make:repository UserRepository --model=User
 
-# Generate Complete Model Stack
-php artisan make:model User --validator
-# Creates: Model, Repository, Validator
-
 # Generate Criteria
 php artisan make:criteria ActiveUsersCriteria
-
-# Generate Transformer
-php artisan make:transformer UserTransformer --model=User
-
-# Generate Validator
-php artisan make:validator UserValidator --rules=create,update
 ```
 
 ---
@@ -629,123 +566,4 @@ $users = $repository->all(); // Cached with tags
 $repository->create($data);  // All related cache cleared automatically
 ```
 
-### **Relationship Queries with HashIds**
-```php
-// Complex relationships with HashId support
-$users = $repository->whereHas('orders', function($query) {
-    $query->whereIn('product_id', ['abc123', 'def456']) // HashIds decoded
-          ->where('status', 'completed');
-})->with(['orders.products'])->get();
-```
-
-### **Event-Driven Architecture**
-```php
-// Listen to repository events
-Event::listen(RepositoryCreated::class, function($event) {
-    Cache::tags(['users'])->flush();
-    NotificationService::send($event->getModel());
-});
-
-Event::listen(DataSanitizedEvent::class, function($event) {
-    SecurityLogger::logSanitization($event);
-});
-```
-
 ---
-
-## 📈 **Performance Tips**
-
-### **1. Optimize Bulk Operations**
-```php
-// Process large datasets efficiently
-$repository->bulkInsert($millionRecords, [
-    'batch_size' => 2000,
-    'chunk_callback' => fn($i, $t, $c) => echo "Progress: {$t}/{$c}\n"
-]);
-```
-
-### **2. Use Transactions for Data Integrity**
-```php
-// Automatic transaction management
-$repository->safeCreate($criticalData); // Wrapped automatically if needed
-```
-
-### **3. Monitor Performance**
-```php
-// Use logging or custom events to monitor performance
-```
-
----
-
-## 🐛 **Troubleshooting**
-
-### **Transaction Problems**
-```php
-// Debug transaction state
-$stats = $repository->getTransactionStats();
-logger('Transaction stats', $stats);
-```
-
----
-
-## 🤝 **Contributing**
-
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-### **Development Setup**
-
-```bash
-git clone https://github.com/GigiArteni/apiato-repository.git
-cd apiato-repository
-composer install
-composer test
-```
-
----
-
-## 📝 **Changelog**
-
-See [CHANGELOG.md](CHANGELOG.md) for all changes and version history.
-
----
-
-## 🛡️ **Security**
-
-If you discover any security-related issues, please email security@apiato.io instead of using the issue tracker.
-
----
-
-## 📄 **License**
-
-The MIT License (MIT). Please see [License File](LICENSE) for more information.
-
----
-
-## 🙏 **Credits**
-
-- **Apiato Team** - Package development and maintenance
-- **l5-repository** - Original inspiration and patterns
-- **Laravel Community** - Framework and ecosystem
-- **Apiato Community** - Testing and feedback
-
----
-
-## 🔗 **Links**
-
-- **GitHub**: https://github.com/GigiArteni/apiato-repository
-- **Packagist**: https://packagist.org/packages/apiato/repository
-- **Documentation**: https://apiato-repository.readthedocs.io
-- **Apiato**: https://apiato.io
-- **Issues**: https://github.com/GigiArteni/apiato-repository/issues
-
----
-
-## ⭐ **Show Your Support**
-
-If this package helps you build better Apiato applications, please ⭐ star the repository!
-
----
-
-**Made with ❤️ for the Apiato community**
-
-*The most advanced repository pattern implementation in the PHP ecosystem* 🚀

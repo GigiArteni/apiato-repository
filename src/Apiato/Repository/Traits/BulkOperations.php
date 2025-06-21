@@ -4,8 +4,6 @@ namespace Apiato\Repository\Traits;
 
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
-use Apiato\Repository\Events\RepositoryBulkCreated;
-use Apiato\Repository\Events\RepositoryBulkUpdated;
 
 /**
  * Advanced Bulk Operations Trait
@@ -66,9 +64,6 @@ trait BulkOperations
             }
         }
 
-        // Fire bulk created event
-        event(new RepositoryBulkCreated($this, $data));
-
         // Clear cache
         if (method_exists($this, 'clearCache')) {
             $this->clearCache();
@@ -109,9 +104,6 @@ trait BulkOperations
         }
 
         $affectedRows = $query->update($values);
-
-        // Fire bulk updated event
-        event(new RepositoryBulkUpdated($this, $conditions, $values, $affectedRows));
 
         // Clear cache
         if (method_exists($this, 'clearCache')) {
