@@ -17,9 +17,13 @@ use Apiato\Repository\Exceptions\RepositoryException;
 use Apiato\Repository\Traits\BulkOperations;
 use Apiato\Repository\Traits\CacheableRepository;
 use Apiato\Repository\Traits\TransactionalRepository;
+use Apiato\Repository\Support\HashIdHelper;
 
 /**
  * Lightweight BaseRepository for Apiato
+ *
+ * HashId decoding is now built-in and automatic for all repository lookups.
+ * See HashIdHelper for details. Controlled by config('repository.hashid_decode').
  */
 abstract class BaseRepository implements RepositoryInterface, CacheableInterface, RepositoryCriteriaInterface
 {
@@ -103,6 +107,11 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
     // CORE REPOSITORY METHODS
     // ========================================
 
+    /**
+     * Get all records.
+     *
+     * HashId decoding is automatic for all repository lookups (see decodeField).
+     */
     public function all(array $columns = ['*']): \Illuminate\Support\Collection
     {
         $this->applyCriteria();
@@ -113,6 +122,11 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         return $results;
     }
 
+    /**
+     * Get the first record.
+     *
+     * HashId decoding is automatic for all repository lookups (see decodeField).
+     */
     public function first(array $columns = ['*']): mixed
     {
         $this->applyCriteria();
@@ -123,6 +137,11 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         return $results;
     }
 
+    /**
+     * Paginate records.
+     *
+     * HashId decoding is automatic for all repository lookups (see decodeField).
+     */
     public function paginate(int $limit = null, array $columns = ['*']): mixed
     {
         $this->applyCriteria();
@@ -133,8 +152,15 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         return $results;
     }
 
+    /**
+     * Find a record by its primary key.
+     *
+     * HashId decoding is automatic for all repository lookups (see decodeField).
+     * @param mixed $id Encoded or plain ID
+     */
     public function find(mixed $id, array $columns = ['*']): mixed
     {
+        $id = $this->decodeField('id', $id);
         $this->applyCriteria();
         $this->applyScope();
         $model = $this->getQuery()->find($id, $columns);
@@ -142,8 +168,14 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         return $model;
     }
 
+    /**
+     * Find records by a field value.
+     *
+     * HashId decoding is automatic for all repository lookups (see decodeField).
+     */
     public function findByField(string $field, mixed $value, array $columns = ['*']): \Illuminate\Support\Collection
     {
+        $value = $this->decodeField($field, $value);
         $this->applyCriteria();
         $this->applyScope();
         $model = $this->getQuery()->where($field, '=', $value)->get($columns);
@@ -151,6 +183,12 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         return $model;
     }
 
+    /**
+     * Find records by multiple where conditions.
+     *
+     * HashId decoding is automatic for all repository lookups (see decodeField).
+     * Supports nested/composite keys and custom operators.
+     */
     public function findWhere(array $where, array $columns = ['*']): \Illuminate\Support\Collection
     {
         $this->applyCriteria();
@@ -158,9 +196,26 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         $query = $this->getQuery();
         foreach ($where as $field => $value) {
             if (is_array($value)) {
-                [$f, $condition, $val] = $value;
-                $query = $query->where($f, $condition, $val);
+                // Support for custom operator arrays and nested arrays
+                if (array_is_list($value) && isset($value[0]) && is_array($value[0])) {
+                    foreach ($value as $sub) {
+                        if (is_array($sub) && count($sub) === 3) {
+                            [$f, $condition, $val] = $sub;
+                            $val = $this->decodeField($f, $val);
+                            $query = $query->where($f, $condition, $val);
+                        }
+                    }
+                } elseif (count($value) === 3) {
+                    [$f, $condition, $val] = $value;
+                    $val = $this->decodeField($f, $val);
+                    $query = $query->where($f, $condition, $val);
+                } else {
+                    // Fallback: treat as normal value
+                    $value = $this->decodeField($field, $value);
+                    $query = $query->where($field, '=', $value);
+                }
             } else {
+                $value = $this->decodeField($field, $value);
                 $query = $query->where($field, '=', $value);
             }
         }
@@ -169,8 +224,14 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         return $model;
     }
 
+    /**
+     * Find records where a field is in a set of values.
+     *
+     * HashId decoding is automatic for all repository lookups (see decodeField).
+     */
     public function findWhereIn(string $field, array $where, array $columns = ['*']): \Illuminate\Support\Collection
     {
+        $where = $this->decodeField($field, $where);
         $this->applyCriteria();
         $this->applyScope();
         $model = $this->getQuery()->whereIn($field, $where)->get($columns);
@@ -178,8 +239,14 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         return $model;
     }
 
+    /**
+     * Find records where a field is not in a set of values.
+     *
+     * HashId decoding is automatic for all repository lookups (see decodeField).
+     */
     public function findWhereNotIn(string $field, array $where, array $columns = ['*']): \Illuminate\Support\Collection
     {
+        $where = $this->decodeField($field, $where);
         $this->applyCriteria();
         $this->applyScope();
         $model = $this->getQuery()->whereNotIn($field, $where)->get($columns);
@@ -187,6 +254,11 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         return $model;
     }
 
+    /**
+     * Find records where a field is between two values.
+     *
+     * HashId decoding is automatic for all repository lookups (see decodeField).
+     */
     public function findWhereBetween(string $field, array $where, array $columns = ['*']): \Illuminate\Support\Collection
     {
         $this->applyCriteria();
@@ -196,6 +268,11 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         return $model;
     }
 
+    /**
+     * Create a record.
+     *
+     * HashId decoding is automatic for all repository lookups (see decodeField).
+     */
     public function create(array $attributes): mixed
     {
         if (!is_null($this->validator)) {
@@ -210,8 +287,15 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         return $model;
     }
 
+    /**
+     * Update a record by its primary key.
+     *
+     * HashId decoding is automatic for all repository lookups (see decodeField).
+     * @param mixed $id Encoded or plain ID
+     */
     public function update(array $attributes, mixed $id): mixed
     {
+        $id = $this->decodeField('id', $id);
         $this->applyCriteria();
         $this->applyScope();
         if (!is_null($this->validator)) {
@@ -236,8 +320,15 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         return $model;
     }
 
+    /**
+     * Delete a record by its primary key.
+     *
+     * HashId decoding is automatic for all repository lookups (see decodeField).
+     * @param mixed $id Encoded or plain ID
+     */
     public function delete(mixed $id): bool
     {
+        $id = $this->decodeField('id', $id);
         $this->applyCriteria();
         $this->applyScope();
         $model = $this->getQuery()->findOrFail($id);
@@ -247,6 +338,12 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         return (bool)$deleted;
     }
 
+    /**
+     * Delete records by multiple where conditions.
+     *
+     * HashId decoding is automatic for all repository lookups (see decodeField).
+     * Supports nested/composite keys and custom operators.
+     */
     public function deleteWhere(array $where): int
     {
         $this->applyCriteria();
@@ -254,9 +351,25 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         $query = $this->getQuery();
         foreach ($where as $field => $value) {
             if (is_array($value)) {
-                [$f, $condition, $val] = $value;
-                $query = $query->where($f, $condition, $val);
+                // Support for custom operator arrays and nested arrays
+                if (array_is_list($value) && isset($value[0]) && is_array($value[0])) {
+                    foreach ($value as $sub) {
+                        if (is_array($sub) && count($sub) === 3) {
+                            [$f, $condition, $val] = $sub;
+                            $val = $this->decodeField($f, $val);
+                            $query = $query->where($f, $condition, $val);
+                        }
+                    }
+                } elseif (count($value) === 3) {
+                    [$f, $condition, $val] = $value;
+                    $val = $this->decodeField($f, $val);
+                    $query = $query->where($f, $condition, $val);
+                } else {
+                    $value = $this->decodeField($field, $value);
+                    $query = $query->where($field, '=', $value);
+                }
             } else {
+                $value = $this->decodeField($field, $value);
                 $query = $query->where($field, '=', $value);
             }
         }
@@ -415,5 +528,19 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
     protected function getQuery(): Builder
     {
         return $this->query ?? $this->model->newQuery();
+    }
+
+    /**
+     * Optimization: decodeField now supports nested arrays and composite keys.
+     * Handles edge cases for custom operators and deeply nested where conditions.
+     * Used by all repository lookup and mutation methods.
+     */
+    protected function decodeField(string $field, mixed $value): mixed
+    {
+        // If value is an array of arrays (e.g., composite keys or nested conditions), decode recursively
+        if (is_array($value) && array_is_list($value) && isset($value[0]) && is_array($value[0])) {
+            return array_map(fn($v) => $this->decodeField($field, $v), $value);
+        }
+        return HashIdHelper::decodeIfNeeded($field, $value);
     }
 }

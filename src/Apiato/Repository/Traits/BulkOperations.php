@@ -4,6 +4,7 @@ namespace Apiato\Repository\Traits;
 
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Apiato\Repository\Support\HashIdHelper;
 
 /**
  * Advanced Bulk Operations Trait
@@ -88,7 +89,7 @@ trait BulkOperations
 
         // Add updated_at timestamp
         if ($options['timestamps']) {
-            $values['updated_at'] = Carbon::now();
+            $values['updated_at'] = \Carbon\Carbon::now();
         }
 
         $query = $this->model->newQuery();
@@ -97,8 +98,10 @@ trait BulkOperations
         foreach ($conditions as $field => $value) {
             if (is_array($value)) {
                 [$field, $operator, $val] = $value;
+                $val = $this->decodeBulkField($field, $val);
                 $query->where($field, $operator, $val);
             } else {
+                $value = $this->decodeBulkField($field, $value);
                 $query->where($field, $value);
             }
         }
@@ -231,8 +234,10 @@ trait BulkOperations
         foreach ($conditions as $field => $value) {
             if (is_array($value)) {
                 [$field, $operator, $val] = $value;
+                $val = $this->decodeBulkField($field, $val);
                 $query->where($field, $operator, $val);
             } else {
+                $value = $this->decodeBulkField($field, $value);
                 $query->where($field, $value);
             }
         }
@@ -241,7 +246,7 @@ trait BulkOperations
         $usesSoftDeletes = $options['soft_delete'] ?? method_exists($this->model, 'bootSoftDeletes');
         
         if ($usesSoftDeletes) {
-            $affectedRows = $query->update(['deleted_at' => Carbon::now()]);
+            $affectedRows = $query->update(['deleted_at' => \Carbon\Carbon::now()]);
         } else {
             $affectedRows = $query->delete();
         }
@@ -252,6 +257,18 @@ trait BulkOperations
         }
 
         return $affectedRows;
+    }
+
+    /**
+     * Helper to decode id fields using HashIdHelper for bulk operations.
+     */
+    protected function decodeBulkField(string $field, mixed $value): mixed
+    {
+        // If value is an array of arrays (e.g., composite keys or nested conditions), decode recursively
+        if (is_array($value) && array_is_list($value) && isset($value[0]) && is_array($value[0])) {
+            return array_map(fn($v) => $this->decodeBulkField($field, $v), $value);
+        }
+        return HashIdHelper::decodeIfNeeded($field, $value);
     }
 
     /**
@@ -271,7 +288,8 @@ trait BulkOperations
                 $q->orWhere(function($subQ) use ($record, $uniqueColumns) {
                     foreach ($uniqueColumns as $column) {
                         if (isset($record[$column])) {
-                            $subQ->where($column, $record[$column]);
+                            $decoded = $this->decodeBulkField($column, $record[$column]);
+                            $subQ->where($column, $decoded);
                         }
                     }
                 });

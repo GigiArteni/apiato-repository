@@ -7,10 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Apiato\Repository\Contracts\CriteriaInterface;
 use Apiato\Repository\Contracts\RepositoryInterface;
+use Apiato\Repository\Support\HashIdHelper;
 
 /**
  * Enhanced RequestCriteria with advanced search capabilities
  * Enabled by REPOSITORY_ENHANCED_SEARCH=true
+ *
+ * HashId decoding is now built-in and automatic for all criteria/query string lookups.
+ * See HashIdHelper for details. Controlled by config('repository.hashid_decode').
  */
 class RequestCriteria implements CriteriaInterface
 {
@@ -202,11 +206,7 @@ class RequestCriteria implements CriteriaInterface
     {
         foreach ($fields as $field) {
             $value = $condition === 'like' ? "%{$term}%" : $term;
-            if ($this->isIdField($field) && $repository /* && method_exists($repository, 'processIdValue') */) {
-                // HashId support removed; skip processIdValue
-                // $processedValue = $repository->processIdValue($term);
-                // $value = $condition === 'like' ? "%{$processedValue}%" : $processedValue;
-            }
+            $value = $this->decodeCriteriaField($field, $value);
             if (strpos($field, '.') !== false) {
                 $this->applyRelationshipSearch($query, $field, $value, $condition, $operator);
             } else {
@@ -217,6 +217,14 @@ class RequestCriteria implements CriteriaInterface
                 }
             }
         }
+    }
+
+    /**
+     * Decodes HashId for ID fields in advanced/enhanced search and filters.
+     */
+    protected function decodeCriteriaField(string $field, mixed $value): mixed
+    {
+        return $this->isIdField($field) ? HashIdHelper::decodeIfNeeded($field, $value) : $value;
     }
 
     /**
@@ -284,10 +292,9 @@ class RequestCriteria implements CriteriaInterface
                 }
             }
             if ($value) {
-                if ($this->isIdField($field) && /* method_exists($repository, 'processIdValue') && config('repository.apiato.hashids.decode_search', true) */ false) {
-                    // HashId support removed; skip processIdValue
-                    // $value = $repository->processIdValue($value);
-                    // $condition = "=";
+                if ($this->isIdField($field)) {
+                    $value = HashIdHelper::decodeIfNeeded($field, $value);
+                    $condition = ($condition == 'like' || $condition == 'ilike') ? '=' : $condition;
                 } else {
                     if ($condition == "like" || $condition == "ilike") {
                         $value = "%{$value}%";
