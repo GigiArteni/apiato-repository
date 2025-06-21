@@ -233,38 +233,6 @@ class PerformanceTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
-    public function it_benchmarks_simulated_middleware_stack_performance()
-    {
-        // Simulate middleware by wrapping create in a closure
-        $rows = [];
-        for ($i = 0; $i < 500; $i++) {
-            $rows[] = [
-                'name' => 'User'.$i,
-                'email' => 'user'.$i.'@example.com',
-                'bio' => '<b>Bio</b>'.$i
-            ];
-        }
-        $middleware = function ($next) {
-            return function ($row) use ($next) {
-                usleep(1000); // 1ms
-                return $next($row);
-            };
-        };
-        $handler = function ($row) {
-            $this->repository->create($row);
-        };
-        $stack = $middleware($handler);
-        $start = microtime(true);
-        foreach ($rows as $row) {
-            $stack($row);
-        }
-        $elapsed = (microtime(true) - $start) * 1000;
-        fwrite(STDERR, "Simulated Middleware Stack (500 rows, 1ms/row): {$elapsed} ms\n");
-        echo "\n[Performance] Simulated Middleware Stack (500 rows, 1ms/row): {$elapsed} ms\n";
-        $this->assertTrue(true);
-    }
-
-    #[\PHPUnit\Framework\Attributes\Test]
     public function it_benchmarks_relationship_eager_loading()
     {
         // Simulate related data: create a related table and model
@@ -320,51 +288,6 @@ class PerformanceTest extends TestCase
         ]);
         $elapsed = (microtime(true) - $start) * 1000;
         fwrite(STDERR, "Advanced Criteria Parsing: {$elapsed} ms\n");
-        $this->assertTrue(true);
-    }
-
-    #[\PHPUnit\Framework\Attributes\Test]
-    public function it_benchmarks_simulated_custom_middleware_chain_performance()
-    {
-        $rows = [];
-        for ($i = 0; $i < 500; $i++) {
-            $rows[] = [
-                'name' => 'User'.$i,
-                'email' => 'user'.$i.'@example.com',
-                'bio' => '<b>Bio</b>'.$i
-            ];
-        }
-        // Simulate a chain of 3 middleware
-        $middleware1 = function ($next) {
-            return function ($row) use ($next) {
-                usleep(500); // 0.5ms
-                return $next($row);
-            };
-        };
-        $middleware2 = function ($next) {
-            return function ($row) use ($next) {
-                usleep(500); // 0.5ms
-                return $next($row);
-            };
-        };
-        $middleware3 = function ($next) {
-            return function ($row) use ($next) {
-                usleep(500); // 0.5ms
-                return $next($row);
-            };
-        };
-        $handler = function ($row) {
-            $this->repository->create($row);
-        };
-        // Compose middleware chain
-        $stack = $middleware1($middleware2($middleware3($handler)));
-        $start = microtime(true);
-        foreach ($rows as $row) {
-            $stack($row);
-        }
-        $elapsed = (microtime(true) - $start) * 1000;
-        fwrite(STDERR, "Simulated Custom Middleware Chain (500 rows, 3x0.5ms/row): {$elapsed} ms\n");
-        echo "\n[Performance] Simulated Custom Middleware Chain (500 rows, 3x0.5ms/row): {$elapsed} ms\n";
         $this->assertTrue(true);
     }
 
@@ -532,10 +455,8 @@ class PerformanceTest extends TestCase
         $summary .= "| Complex Criteria Query         | <1                     |\n";
         $summary .= "| Smart Transaction (1000 rows)  | ~150                   |\n";
         $summary .= "| Bulk Delete (1000 rows)        | ~170                   |\n";
-        $summary .= "| Simulated Middleware Stack (500 rows)    | ~5000                  |\n";
         $summary .= "| Relationship Eager Loading     | ~50                    |\n";
         $summary .= "| Advanced Criteria Parsing      | <1                     |\n";
-        $summary .= "| Simulated Custom Middleware Chain (500 rows)        | ~14000                 |\n";
         $summary .= "| Mass Upsert (2000 rows)        | ~1200                  |\n";
         $summary .= "| Mass Validation (1000 rows)    | ~10                    |\n";
         $summary .= "| Large Result Pagination        | ~10                    |\n";

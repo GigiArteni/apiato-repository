@@ -1,6 +1,6 @@
 # Architecture & Lifecycle Diagrams
 
-This page provides visual diagrams and flowcharts to help you understand the architecture, repository lifecycle, middleware flow, and event dispatching in Apiato Repository.
+This page provides visual diagrams and flowcharts to help you understand the architecture, repository lifecycle, and event dispatching in Apiato Repository.
 
 ---
 
@@ -9,7 +9,7 @@ This page provides visual diagrams and flowcharts to help you understand the arc
 ```mermaid
 graph TD;
     A[Controller/Service] --> B[Repository Method]
-    B --> C{Middleware Stack}
+    B --> C{Repository Flow}
     C -->|Audit| D[AuditMiddleware]
     C -->|Cache| E[CacheMiddleware]
     C -->|RateLimit| F[RateLimitMiddleware]
@@ -26,16 +26,11 @@ graph TD;
 
 ---
 
-## 2. Middleware Flow
+## 2. Repository Flow
 
 ```mermaid
 flowchart LR
-    Start --> Middleware1 --> Middleware2 --> Middleware3 --> Operation --> End
-    subgraph MiddlewareStack
-        Middleware1[Audit]
-        Middleware2[Cache]
-        Middleware3[RateLimit]
-    end
+    Start --> Operation --> End
 ```
 
 ---

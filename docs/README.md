@@ -34,7 +34,7 @@ Welcome to the complete documentation for the **Apiato Repository** package. Thi
 - [Implementing Advanced Search](tutorials/implementing-search.md)
 - [Performance Optimization](tutorials/performance-optimization.md)
 - [Testing Repositories](tutorials/testing-repositories.md)
-- [Middleware & Cross-Cutting Concerns](tutorials/middleware.md)
+- [Cross-Cutting Concerns](tutorials/cross-cutting-concerns.md)
 - [Bulk Operations & Smart Transactions](tutorials/bulk-operations.md)
 - [Security, Sanitization & Validation](tutorials/security-sanitization.md)
 - [API & Controller Integration](tutorials/api-integration.md)

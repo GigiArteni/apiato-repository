@@ -1,6 +1,6 @@
 # Apiato Repository: Exhaustive API Reference
 
-This document provides a **comprehensive, professional, and user-centric reference** for all features, methods, traits, contracts, middleware, events, and advanced capabilities of the Apiato Repository. It is designed to serve as your single source of truth for every aspect of repository usage, configuration, and extension.
+This document provides a **comprehensive, professional, and user-centric reference** for all features, methods, traits, contracts, events, and advanced capabilities of the Apiato Repository. It is designed to serve as your single source of truth for every aspect of repository usage, configuration, and extension.
 
 ---
 
@@ -9,22 +9,21 @@ This document provides a **comprehensive, professional, and user-centric referen
 2. [Advanced Querying & Criteria](#advanced-querying--criteria)
 3. [Bulk Operations](#bulk-operations)
 4. [Sanitization & Security](#sanitization--security)
-5. [Middleware System](#middleware-system)
-6. [Caching & Performance](#caching--performance)
-7. [Transactions & Error Handling](#transactions--error-handling)
-8. [Presenters & Transformers](#presenters--transformers)
-9. [Validation](#validation)
-10. [Events & Event Payloads](#events--event-payloads)
-11. [Contracts & Traits](#contracts--traits)
-12. [Advanced Search & HashId Integration](#advanced-search--hashid-integration)
-13. [Real-World Usage Patterns](#real-world-usage-patterns)
-14. [Performance Tips](#performance-tips)
+5. [Caching & Performance](#caching--performance)
+6. [Transactions & Error Handling](#transactions--error-handling)
+7. [Presenters & Transformers](#presenters--transformers)
+8. [Validation](#validation)
+9. [Events & Event Payloads](#events--event-payloads)
+10. [Contracts & Traits](#contracts--traits)
+11. [Advanced Search & HashId Integration](#advanced-search--hashid-integration)
+12. [Real-World Usage Patterns](#real-world-usage-patterns)
+13. [Performance Tips](#performance-tips)
 
 ---
 
 ## Core CRUD & Query Methods
 
-All core methods support **HashId decoding** and are middleware/criteria/transaction/caching aware.
+All core methods support **HashId decoding** and are criteria/transaction/caching aware.
 
 | Method | Signature | Description | Example |
 |--------|-----------|-------------|---------|
@@ -95,27 +94,6 @@ Optimized for performance, with full HashId and event support.
 $repo->setSanitizationRules(['email'=>'email','bio'=>'html_purify'])->create($data);
 $repo->skipSanitization()->update($data,'abc123');
 ```
-
----
-
-## Middleware System
-
-Apply cross-cutting logic to all repository methods. Built-in middleware:
-- **AuditMiddleware**: Logs all create/update/delete with user, IP, duration.
-- **CacheMiddleware**: Advanced caching with tags, auto-invalidation.
-- **TenantScopeMiddleware**: Multi-tenant data isolation.
-- **RateLimitMiddleware**: Prevents abuse by limiting method calls.
-- **PerformanceMonitorMiddleware**: Logs slow queries and query counts.
-
-**Usage:**
-```php
-protected $middleware = [
-    \Apiato\Repository\Middleware\AuditMiddleware::class,
-    'cache:60', // 60 minutes
-    'tenant-scope:company_id,123',
-];
-```
-Custom middleware: extend `RepositoryMiddleware` and register.
 
 ---
 
@@ -208,7 +186,6 @@ All actions fire events for extensibility and audit:
 **Key Traits:**
 - `SanitizableRepository`: Input sanitization
 - `BulkOperations`: High-performance bulk ops
-- `HasMiddleware`: Middleware system
 - `CacheableRepository`: Caching
 - `TransactionalRepository`: Transaction handling
 - `PresentableTrait`: Presentation logic

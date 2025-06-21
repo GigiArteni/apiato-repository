@@ -77,4 +77,29 @@ return [
         'use_transactions' => env('REPOSITORY_BULK_TRANSACTIONS', true),
         'log_performance' => false,
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Apiato v.13 Integration
+    |--------------------------------------------------------------------------
+    */
+    'apiato' => [
+        'hashids' => [
+            'enabled' => env('REPOSITORY_HASHIDS_ENABLED', true),
+            'auto_decode' => env('REPOSITORY_HASHIDS_AUTO_DECODE', true),
+            'decode_search' => env('REPOSITORY_HASHIDS_DECODE_SEARCH', true),
+            'decode_filters' => env('REPOSITORY_HASHIDS_DECODE_FILTERS', true),
+        ],
+        'performance' => [
+            'enhanced_caching' => env('REPOSITORY_ENHANCED_CACHE', true),
+            'query_optimization' => env('REPOSITORY_QUERY_OPTIMIZATION', true),
+            'eager_loading_detection' => env('REPOSITORY_EAGER_LOADING_DETECTION', true),
+        ],
+        'features' => [
+            'enhanced_search' => env('REPOSITORY_ENHANCED_SEARCH', true),
+            'auto_cache_tags' => env('REPOSITORY_AUTO_CACHE_TAGS', true),
+            'smart_relationships' => env('REPOSITORY_SMART_RELATIONSHIPS', true),
+            'event_dispatching' => env('REPOSITORY_EVENT_DISPATCHING', true),
+        ]
+    ],
 ];

@@ -117,8 +117,7 @@ GET /api/users?search=roles.name:admin;company.projects.status:active&filter=sta
   ```
 - **Multi-Tenancy (Company/Org):**
   ```php
-  $users = $userRepo->middleware(['tenant-scope:company_id'])
-      ->where('role', 'manager')
+  $users = $userRepo->where('role', 'manager')
       ->get();
   ```
 - **Cross-Model Bulk Operations:**

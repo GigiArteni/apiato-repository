@@ -12,7 +12,7 @@ A quick reference for important terms, concepts, and patterns used throughout th
 
 **ScopeQuery**: A closure-based way to apply ad-hoc query logic to a repository.
 
-**Middleware**: Cross-cutting logic (e.g., audit, cache, rate-limit) that can be applied to repository operations, similar to HTTP middleware.
+**Cross-cutting logic**: Audit, cache, rate-limit, etc. that can be applied to repository operations, similar to HTTP middleware. (Middleware system removed)
 
 **Bulk Operations**: High-performance methods for inserting, updating, or deleting many records at once.
 

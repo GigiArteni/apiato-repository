@@ -294,15 +294,6 @@ use Apiato\Repository\Criteria\RequestCriteria;
 
 class UserRepository extends BaseRepository
 {
-    /**
-     * Apply middleware to all operations
-     */
-    protected $middleware = [
-        'audit:create,update,delete',
-        'cache:30',
-        'tenant-scope:company_id'
-    ];
-
     public function model()
     {
         return User::class;
@@ -341,14 +332,6 @@ use Apiato\Repository\Eloquent\BaseRepository;
 
 class UserRepository extends BaseRepository
 {
-    // Automatic middleware for all operations
-    protected $middleware = [
-        'audit:create,update,delete',
-        'cache:45',
-        'tenant-scope:company_id',
-        'rate-limit:200,1'
-    ];
-
     // Custom sanitization rules
     protected $customSanitizationRules = [
         'email' => 'email',
@@ -367,17 +350,6 @@ class UserRepository extends BaseRepository
         'id' => '=',          // HashIds supported
         'company_id' => '=',  // HashIds supported
     ];
-
-    /**
-     * High-security operation with custom middleware
-     */
-    public function createAdminUser(array $data)
-    {
-        return $this->middleware(['audit', 'performance:100'])
-            ->withTransaction()
-            ->setSanitizationRules(['permissions' => 'strip_tags'])
-            ->create($data);
-    }
 
     /**
      * Bulk import with progress tracking
@@ -407,7 +379,6 @@ class UserService
     public function createUserWithProfile(array $userData, array $profileData)
     {
         return $this->userRepository
-            ->middleware(['audit', 'performance:500'])
             ->transaction(function() use ($userData, $profileData) {
                 // Data automatically sanitized and HashIds decoded
                 $user = $this->userRepository->create($userData);
@@ -425,7 +396,6 @@ class UserService
     public function syncUsersFromExternal(array $externalUsers)
     {
         return $this->userRepository
-            ->middleware(['performance:1000'])
             ->bulkUpsert(
                 $externalUsers,
                 ['external_id'],           // Unique by external ID
@@ -442,8 +412,7 @@ class UserService
         $repo = $this->userRepository;
 
         if ($isSensitive) {
-            $repo = $repo->middleware(['audit', 'performance:100'])
-                         ->withIsolationLevel('SERIALIZABLE');
+            $repo = $repo->withIsolationLevel('SERIALIZABLE');
         }
 
         return $repo->conditionalTransaction(
@@ -466,7 +435,7 @@ class UserController
      */
     public function store(Request $request)
     {
-        // Middleware, sanitization, and HashIds handled automatically
+        // Sanitization and HashIds handled automatically
         $user = $this->userRepository->create($request->all());
         
         return response()->json(['user' => $user]);
@@ -494,10 +463,8 @@ class UserController
      */
     public function search(Request $request)
     {
-        // Enhanced search, HashIds, middleware all automatic
-        $users = $this->userRepository
-            ->middleware(['cache:60']) // Cache search results
-            ->paginate(25);
+        // Enhanced search and HashIds handled automatically
+        $users = $this->userRepository->paginate(25);
             
         return response()->json($users);
     }
@@ -585,22 +552,6 @@ return [
         'use_transactions' => env('REPOSITORY_BULK_TRANSACTIONS', true),
         'sanitize_data' => env('REPOSITORY_BULK_SANITIZE', true),
         'validate_hashids' => env('REPOSITORY_BULK_VALIDATE_HASHIDS', true),
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Repository Middleware
-    |--------------------------------------------------------------------------
-    */
-    'middleware' => [
-        'default_stack' => ['audit', 'cache:30'],
-        'available' => [
-            'audit' => \Apiato\Repository\Middleware\AuditMiddleware::class,
-            'cache' => \Apiato\Repository\Middleware\CacheMiddleware::class,
-            'rate-limit' => \Apiato\Repository\Middleware\RateLimitMiddleware::class,
-            'tenant-scope' => \Apiato\Repository\Middleware\TenantScopeMiddleware::class,
-            'performance' => \Apiato\Repository\Middleware\PerformanceMonitorMiddleware::class,
-        ]
     ],
 
     /*

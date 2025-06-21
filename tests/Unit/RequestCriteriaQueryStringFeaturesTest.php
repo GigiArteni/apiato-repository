@@ -205,12 +205,6 @@ class RequestCriteriaQueryStringFeaturesTest extends TestCase
                 '/api/users?visible=name,email',
                 null
             ],
-            // Middleware param (simulate via query string)
-            [
-                'Middleware param',
-                '/api/users?middleware=audit,cache:30',
-                null
-            ],
             // Bulk operations (simulate via query string for test)
             [
                 'Bulk operation: deleteWhere',

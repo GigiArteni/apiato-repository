@@ -52,7 +52,7 @@ This guide explains how to use Apiato Repository in standard Laravel projects, w
 
 - Use repositories for all data access; avoid direct model queries in controllers.
 - Use criteria for reusable business logic.
-- Leverage middleware for cross-cutting concerns.
+- Leverage cross-cutting concerns for audit, caching, and performance.
 - Use Laravel's validation and event system for security and integrations.
 
 ---

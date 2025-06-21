@@ -27,7 +27,7 @@ use Apiato\Repository\Traits\TransactionalRepository;
 /**
  * Lightweight BaseRepository for Apiato
  *
- * Removed: Middleware, HashId, Sanitization, Presenter Layer
+ * Removed: HashId, Sanitization, Presenter Layer
  */
 abstract class BaseRepository implements RepositoryInterface, CacheableInterface, RepositoryCriteriaInterface
 {

@@ -1,6 +1,6 @@
 # Real-World API & Controller Integration Tutorial
 
-This tutorial demonstrates how to integrate Apiato Repository into real-world API controllers and services, leveraging all advanced features: criteria, middleware, bulk ops, search, sanitization, transactions, and events.
+This tutorial demonstrates how to integrate Apiato Repository into real-world API controllers and services, leveraging all advanced features: criteria, bulk ops, search, sanitization, transactions, and events.
 
 ---
 
@@ -13,7 +13,7 @@ class UserController
 
     public function store(Request $request)
     {
-        // Middleware, sanitization, and HashIds handled automatically
+        // Sanitization and HashIds handled automatically
         $user = $this->userRepository->create($request->all());
         return response()->json(['user' => $user]);
     }
@@ -82,7 +82,7 @@ Event::listen(RepositoryCreated::class, function($event) {
 ## 6. Best Practices
 
 - Always use criteria for API query parsing.
-- Use middleware for audit, caching, and security.
+- Use audit, caching, and security features as needed.
 - Wrap complex operations in transactions.
 - Listen for events to trigger notifications, logging, or integrations.
 
