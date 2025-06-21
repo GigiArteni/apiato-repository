@@ -42,9 +42,6 @@ class PerformanceTest extends TestCase
         $this->app->singleton('config', function () {
             return new class implements \ArrayAccess {
                 private $items = [
-                    'repository.security.sanitize_on.create' => true,
-                    'repository.security.sanitize_on.update' => true,
-                    'repository.security.sanitize_on.bulk_operations' => true,
                     'repository.bulk_operations.chunk_size' => 1000,
                     'repository.bulk_operations.sanitize_data' => true,
                     'repository.sanitization.exclude' => ['password'],

@@ -1,6 +1,6 @@
 # Real-World API & Controller Integration Tutorial
 
-This tutorial demonstrates how to integrate Apiato Repository into real-world API controllers and services, leveraging all advanced features: criteria, bulk ops, search, sanitization, transactions, and events.
+This tutorial demonstrates how to integrate Apiato Repository into real-world API controllers and services, leveraging all advanced features: criteria, bulk ops, search, transactions, and events.
 
 ---
 
@@ -13,7 +13,6 @@ class UserController
 
     public function store(Request $request)
     {
-        // Sanitization and HashIds handled automatically
         $user = $this->userRepository->create($request->all());
         return response()->json(['user' => $user]);
     }

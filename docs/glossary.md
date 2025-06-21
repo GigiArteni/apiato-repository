@@ -16,8 +16,6 @@ A quick reference for important terms, concepts, and patterns used throughout th
 
 **Bulk Operations**: High-performance methods for inserting, updating, or deleting many records at once.
 
-**Sanitization**: The process of cleaning and validating input data to prevent security issues (e.g., XSS, SQL injection).
-
 **Validation**: Ensuring data meets defined rules before it is persisted or processed.
 
 **Presenter**: A class that transforms data for output, often using Fractal.

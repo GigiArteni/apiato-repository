@@ -332,13 +332,6 @@ use Apiato\Repository\Eloquent\BaseRepository;
 
 class UserRepository extends BaseRepository
 {
-    // Custom sanitization rules
-    protected $customSanitizationRules = [
-        'email' => 'email',
-        'bio' => 'html_purify',
-        'name' => 'string'
-    ];
-
     public function model()
     {
         return User::class;
@@ -509,26 +502,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Security & Sanitization Settings
-    |--------------------------------------------------------------------------
-    */
-    'security' => [
-        'sanitize_input' => env('REPOSITORY_SANITIZE_INPUT', true),
-        'sanitize_on' => [
-            'create' => env('REPOSITORY_SANITIZE_CREATE', true),
-            'update' => env('REPOSITORY_SANITIZE_UPDATE', true),
-            'bulk_operations' => env('REPOSITORY_SANITIZE_BULK', true),
-        ],
-        'sanitize_fields' => [
-            'exclude' => ['password', 'token'],
-            'html_fields' => ['description', 'bio', 'content'],
-            'email_fields' => ['email', 'contact_email'],
-        ],
-        'audit_sanitization' => env('REPOSITORY_AUDIT_SANITIZE', false),
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
     | Database Transaction Settings
     |--------------------------------------------------------------------------
     */
@@ -594,13 +567,6 @@ REPOSITORY_HASHIDS_ENABLED=true
 REPOSITORY_HASHIDS_AUTO_DECODE=true
 REPOSITORY_HASHIDS_DECODE_SEARCH=true
 REPOSITORY_HASHIDS_DECODE_FILTERS=true
-
-# Security & Sanitization
-REPOSITORY_SANITIZE_INPUT=true
-REPOSITORY_SANITIZE_CREATE=true
-REPOSITORY_SANITIZE_UPDATE=true
-REPOSITORY_SANITIZE_BULK=true
-REPOSITORY_AUDIT_SANITIZE=false
 
 # Database Transactions
 REPOSITORY_AUTO_TRANSACTION_BULK=true

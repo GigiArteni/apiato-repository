@@ -8,7 +8,6 @@ This guide explains how Apiato Repository is designed for seamless, zero-config 
 
 - **Auto-detection**: The package detects Apiato v.13 and configures itself automatically.
 - **HashId support**: All repository methods work with HashIds out of the box.
-- **Sanitization**: Automatic integration with Apiato's `$request->sanitizeInput()` for secure data handling.
 - **Criteria**: RequestCriteria parses API query params (`search`, `filter`, `orderBy`, etc.) and supports enhanced search.
 
 ---
@@ -42,7 +41,7 @@ This guide explains how Apiato Repository is designed for seamless, zero-config 
 
 ## 5. Troubleshooting Apiato Integration
 
-- If HashIds or sanitization do not work, check that you are running Apiato v.13 and that all config files are published.
+- If HashIds do not work, check that you are running Apiato v.13 and that all config files are published.
 - For advanced configuration, see [Configuration Reference](reference/configuration.md).
 
 ---

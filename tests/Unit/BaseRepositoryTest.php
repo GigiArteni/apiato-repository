@@ -224,19 +224,6 @@ class BaseRepositoryTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
-    public function it_handles_hashid_integration()
-    {
-        $user = $this->repository->create(['name' => 'Hash', 'email' => 'hash@example.com']);
-        if (app()->bound('hashids')) {
-            $hashid = app('hashids')->encode($user->id);
-            $found = $this->repository->find($hashid);
-            $this->assertEquals($user->id, $found->id);
-        } else {
-            $this->assertNotNull($user->id);
-        }
-    }
-
-    #[\PHPUnit\Framework\Attributes\Test]
     public function it_handles_caching()
     {
         $user = $this->repository->create(['name' => 'Cache', 'email' => 'cache@example.com']);

@@ -8,16 +8,14 @@ This document provides a **comprehensive, professional, and user-centric referen
 1. [Core CRUD & Query Methods](#core-crud--query-methods)
 2. [Advanced Querying & Criteria](#advanced-querying--criteria)
 3. [Bulk Operations](#bulk-operations)
-4. [Sanitization & Security](#sanitization--security)
-5. [Caching & Performance](#caching--performance)
-6. [Transactions & Error Handling](#transactions--error-handling)
-7. [Presenters & Transformers](#presenters--transformers)
-8. [Validation](#validation)
-9. [Events & Event Payloads](#events--event-payloads)
-10. [Contracts & Traits](#contracts--traits)
-11. [Advanced Search & HashId Integration](#advanced-search--hashid-integration)
-12. [Real-World Usage Patterns](#real-world-usage-patterns)
-13. [Performance Tips](#performance-tips)
+4. [Caching & Performance](#caching--performance)
+5. [Transactions & Error Handling](#transactions--error-handling)
+6. [Presenters & Transformers](#presenters--transformers)
+7. [Validation](#validation)
+8. [Events & Event Payloads](#events--event-payloads)
+9. [Contracts & Traits](#contracts--traits)
+10. [Real-World Usage Patterns](#real-world-usage-patterns)
+11. [Performance Tips](#performance-tips)
 
 ---
 
@@ -79,21 +77,6 @@ Optimized for performance, with full HashId and event support.
 | bulkUpsert | Insert or update many | $repo->bulkUpsert([...],['email']) |
 
 **Events:** All bulk ops fire events (see [Events & Event Payloads](#events--event-payloads)).
-
----
-
-## Sanitization & Security
-
-- **Automatic**: All create/update ops pass through sanitization (integrates with Apiato's `sanitizeInput()` if available).
-- **Custom Rules**: Use `setSanitizationRules()` for field-specific logic.
-- **Skip/Force**: Use `skipSanitization()` to bypass for trusted data.
-- **Audit**: Fires `RepositorySanitizedEvent` with before/after data and changed fields.
-
-**Example:**
-```php
-$repo->setSanitizationRules(['email'=>'email','bio'=>'html_purify'])->create($data);
-$repo->skipSanitization()->update($data,'abc123');
-```
 
 ---
 
@@ -164,7 +147,6 @@ $repo->setValidator(new UserValidator())->create($data);
 All actions fire events for extensibility and audit:
 - **RepositoryCreated/Updated/Deleted**: On single record ops.
 - **RepositoryBulkCreated/Updated/Deleted**: On bulk ops.
-- **RepositorySanitizedEvent**: On data sanitization.
 - **RepositoryCriteriaApplied**: When criteria are applied.
 
 **Payloads**: All events provide access to the repository, model(s), action, and context (see `src/Apiato/Repository/Events/`).
@@ -184,24 +166,10 @@ All actions fire events for extensibility and audit:
 - `Presentable`: For presentable objects
 
 **Key Traits:**
-- `SanitizableRepository`: Input sanitization
 - `BulkOperations`: High-performance bulk ops
 - `CacheableRepository`: Caching
 - `TransactionalRepository`: Transaction handling
 - `PresentableTrait`: Presentation logic
-
----
-
-## Advanced Search & HashId Integration
-
-- **Enhanced Search**: Supports boolean, fuzzy, phrase, multi-field, and relationship search. See [Enhanced Search Guide](../guides/enhanced-search.md).
-- **HashId Integration**: All ID fields auto-decode HashIds (find, search, filter, bulk ops, etc.).
-- **RequestCriteria**: Parses API params for search/filter/order/with.
-
-**API Example:**
-```bash
-GET /api/users?search=+developer +"react native" -intern&filter=company_id:abc123&orderBy=relevance_score&sortedBy=desc
-```
 
 ---
 

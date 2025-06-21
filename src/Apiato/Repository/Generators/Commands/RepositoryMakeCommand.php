@@ -101,35 +101,16 @@ use Apiato\Repository\Eloquent\BaseRepository;
 use Apiato\Repository\Criteria\RequestCriteria;
 use {{MODEL_CLASS}};
 
-/**
- * Class {{CLASS}}
- * Enhanced for Apiato v.13 with HashId support
- * @package {{NAMESPACE}}
- */
 class {{CLASS}} extends BaseRepository
 {
-    /**
-     * Specify Model class name
-     */
     public function model()
     {
         return {{MODEL_CLASS}}::class;
     }
 
-    /**
-     * Specify fields that are searchable
-     * HashId fields (id, *_id) are automatically processed
-     */
     protected $fieldSearchable = [
-        // Add your searchable fields here
-        // \'name\' => \'like\',
-        // \'email\' => \'=\',
-        // \'id\' => \'=\', // Automatically supports HashIds
     ];
 
-    /**
-     * Boot up the repository, pushing criteria
-     */
     public function boot()
     {
         $this->pushCriteria(app(RequestCriteria::class));

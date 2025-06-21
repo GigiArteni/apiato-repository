@@ -339,56 +339,6 @@ trait TransactionalRepository
     }
 
     /**
-     * Bulk upsert with transaction safety and HashId support
-     * 
-     * @param array $records
-     * @param array $uniqueBy
-     * @param array $update
-     * @return int
-     * 
-     * @example
-     * $affected = $repository->bulkUpsertSafely([
-     *     ['id' => 'abc123', 'name' => 'John Updated'],
-     *     ['id' => 'def456', 'name' => 'Jane Updated']
-     * ], ['id'], ['name', 'updated_at']);
-     */
-    public function bulkUpsertSafely(array $records, array $uniqueBy = ['id'], array $update = null): int
-    {
-        return $this->transaction(function() use ($records, $uniqueBy, $update) {
-            // Sanitize all records if sanitization trait is available
-            if (method_exists($this, 'batchSanitize')) {
-                $records = $this->batchSanitize($records, 'bulk_operations');
-            }
-
-            // Process HashIds in bulk
-            $records = $this->processBulkHashIds($records);
-
-            // Perform the upsert
-            return $this->getModel()->upsert($records, $uniqueBy, $update);
-        });
-    }
-
-    /**
-     * Process HashIds in bulk records
-     */
-    protected function processBulkHashIds(array $records): array
-    {
-        if (!method_exists($this, 'processIdValue')) {
-            return $records;
-        }
-
-        foreach ($records as &$record) {
-            foreach ($record as $field => $value) {
-                if ($this->isIdField($field) && is_string($value)) {
-                    $record[$field] = $this->processIdValue($value);
-                }
-            }
-        }
-
-        return $records;
-    }
-
-    /**
      * Execute multiple operations in a single transaction
      * 
      * @param array $operations Array of callables

@@ -18,7 +18,6 @@ This guide explains the core concepts of the Apiato framework and how Apiato Rep
 - **Ship**: Core services, helpers, and base classes shared across containers.
 - **Actions/Tasks**: Encapsulate business logic and data access.
 - **Requests**: Handle validation and authorization.
-- **Sanitization**: All input is sanitized using `$request->sanitizeInput()`.
 - **HashIds**: Used for all IDs in APIs for security and obfuscation.
 
 ---

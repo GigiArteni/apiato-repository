@@ -36,7 +36,6 @@ Welcome to the complete documentation for the **Apiato Repository** package. Thi
 - [Testing Repositories](tutorials/testing-repositories.md)
 - [Cross-Cutting Concerns](tutorials/cross-cutting-concerns.md)
 - [Bulk Operations & Smart Transactions](tutorials/bulk-operations.md)
-- [Security, Sanitization & Validation](tutorials/security-sanitization.md)
 - [API & Controller Integration](tutorials/api-integration.md)
 
 ---

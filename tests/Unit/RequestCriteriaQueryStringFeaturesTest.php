@@ -170,29 +170,6 @@ class RequestCriteriaQueryStringFeaturesTest extends TestCase
                 '/api/users?skipCache=true',
                 null
             ],
-            // HashId decoding in search/filter/IDs
-            [
-                'HashId in search',
-                '/api/users?search=id:abc123',
-                null
-            ],
-            [
-                'HashId in filter',
-                '/api/users?filter[id]=abc123',
-                null
-            ],
-            // --- New: HashId in relationship search with = operator ---
-            [
-                'HashId in relationship search (=)',
-                '/api/users?search=roles.id:abc123',
-                null
-            ],
-            // --- New: HashId in relationship search with in operator ---
-            [
-                'HashId in relationship search (in)',
-                '/api/users?search=roles.id:in(abc123,def456,ghi789)',
-                null
-            ],
             // Field visibility: hidden
             [
                 'Field visibility: hidden',

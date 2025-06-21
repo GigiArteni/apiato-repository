@@ -89,17 +89,11 @@ trait BulkOperations
     {
         $options = array_merge([
             'timestamps' => true,
-            'process_hashids' => true,
         ], $options);
 
         // Add updated_at timestamp
         if ($options['timestamps']) {
             $values['updated_at'] = Carbon::now();
-        }
-
-        // Process HashIds in conditions
-        if ($options['process_hashids']) {
-            $conditions = $this->processHashIdsInConditions($conditions);
         }
 
         $query = $this->model->newQuery();
@@ -236,14 +230,8 @@ trait BulkOperations
     public function bulkDelete(array $conditions, array $options = []): int
     {
         $options = array_merge([
-            'process_hashids' => true,
             'soft_delete' => null, // Auto-detect from model
         ], $options);
-
-        // Process HashIds in conditions
-        if ($options['process_hashids']) {
-            $conditions = $this->processHashIdsInConditions($conditions);
-        }
 
         $query = $this->model->newQuery();
 
@@ -272,44 +260,6 @@ trait BulkOperations
         }
 
         return $affectedRows;
-    }
-
-    /**
-     * Process HashIds in conditions array
-     */
-    protected function processHashIdsInConditions(array $conditions): array
-    {
-        if (!method_exists($this, 'processIdValue')) {
-            return $conditions;
-        }
-
-        $processed = [];
-        
-        foreach ($conditions as $field => $value) {
-            if ($this->isIdField($field)) {
-                if (is_array($value)) {
-                    // Handle array format: ['field', 'operator', 'value']
-                    if (count($value) === 3) {
-                        [$f, $op, $val] = $value;
-                        if (is_array($val)) {
-                            $val = array_map([$this, 'processIdValue'], $val);
-                        } else {
-                            $val = $this->processIdValue($val);
-                        }
-                        $processed[$field] = [$f, $op, $val];
-                    } else {
-                        // Handle array of values
-                        $processed[$field] = array_map([$this, 'processIdValue'], $value);
-                    }
-                } else {
-                    $processed[$field] = $this->processIdValue($value);
-                }
-            } else {
-                $processed[$field] = $value;
-            }
-        }
-        
-        return $processed;
     }
 
     /**
@@ -349,13 +299,5 @@ trait BulkOperations
             $keyParts[] = $record[$column] ?? '';
         }
         return implode('|', $keyParts);
-    }
-
-    /**
-     * Check if field is an ID field for HashId processing
-     */
-    protected function isIdField(string $field): bool
-    {
-        return $field === 'id' || str_ends_with($field, '_id');
     }
 }

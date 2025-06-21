@@ -106,12 +106,6 @@ Even the best tools need a little help sometimes. This guide covers the most com
 - **Event Listener Not Triggered**
   - Ensure you are listening to the correct event class (see [Events Reference](events.md)).
   - Use `Event::fake()` in tests to assert event dispatching.
-- **Sanitization Not Working**
-  - Confirm `sanitizeInput` is enabled in config and used in your requests (see [Security & Sanitization Tutorial](../tutorials/security-sanitization.md)).
-  - Listen for `DataSanitizedEvent` to debug sanitization changes.
-- **API Query Parsing**
-  - Use Laravel’s request debugging to inspect all incoming query params.
-  - Test with both simple and complex queries to isolate issues (see [Enhanced Search Guide](../guides/enhanced-search.md)).
 
 **Common Error Messages:**
 - `Class 'Prettus\Repository\...' not found` — Update all imports to `Apiato\Repository`.

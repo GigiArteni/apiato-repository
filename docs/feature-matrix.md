@@ -9,7 +9,6 @@ This page provides a high-level overview of all features, traits, contracts, and
 | Smart Transactions             | Auto, conditional, batch, isolation, deadlock retry                          | [Advanced Features](guides/advanced-features.md) |
 | Bulk Operations                | High-performance insert/update/upsert/delete, chunking, stats                 | [Advanced Features](guides/advanced-features.md) |
 | Repository Middleware          | Audit, cache, rate-limit, tenant-scope, performance, custom                   | [Advanced Features](guides/advanced-features.md) |
-| Data Sanitization              | Automatic integration with Apiato's sanitizeInput, custom rules               | [Security & Sanitization](reference/api-methods.md#sanitization--security) |
 | Caching                        | Intelligent, taggable, auto-invalidation, manual control                      | [Caching & Performance](guides/caching-performance.md) |
 | Criteria & Scopes              | Reusable, parameterized, stackable, scopeQuery                               | [Advanced Features](guides/advanced-features.md) |
 | Presenters & Transformers      | Fractal integration, custom transformers, field visibility                    | [Presenters & Transformers](reference/api-methods.md#presenters--transformers) |
@@ -18,7 +17,7 @@ This page provides a high-level overview of all features, traits, contracts, and
 | API/Controller Integration     | Real-world API patterns, request criteria, search/filter/orderBy              | [Real-World Examples](guides/real-world-examples.md) |
 | Artisan Generators             | Repositories, criteria, presenters, validators, transformers, entities        | [Artisan Commands](reference/artisan-commands.md) |
 | Advanced Configuration         | All features tunable via config/env, per-repo overrides                      | [Configuration Reference](reference/configuration.md) |
-| Security & Best Practices      | HashIds, sanitization, validation, audit, rate-limiting                      | [Troubleshooting](reference/troubleshooting.md) |
+| Security & Best Practices      | HashIds, validation, audit, rate-limiting                                    | [Troubleshooting](reference/troubleshooting.md) |
 | Testing                        | Unit/integration, HashIds, criteria, caching, events, best practices          | [Testing Repositories](tutorials/testing-repositories.md) |
 | Migration                      | Drop-in replacement for l5-repository, migration guide                        | [Migration Guide](getting-started/migration-from-l5.md) |
 
@@ -35,7 +34,6 @@ This table maps every major feature, trait, middleware, and advanced capability 
 | **Bulk Operations**                  | [Bulk Operations](guides/advanced-features.md#1-batch-operations), [Bulk Ops Tutorial](tutorials/bulk-operations.md) |
 | **Smart Transactions**               | [Advanced Features](guides/advanced-features.md#smart-transactions), [Bulk Ops Tutorial](tutorials/bulk-operations.md) |
 | **HashId Integration**               | [HashId Integration](guides/hashid-integration.md), [Apiato v.13](apiato13.md)                |
-| **Sanitization & Security**          | [Security & Sanitization](tutorials/security-sanitization.md), [Advanced Features](guides/advanced-features.md#sanitization) |
 | **Caching**                          | [Caching & Performance](guides/caching-performance.md), [Advanced Features](guides/advanced-features.md#caching) |
 | **Criteria & Scopes**                | [Advanced Features](guides/advanced-features.md#criteria), [Basic Usage](guides/basic-usage.md#5-advanced-criteria-scopes-and-caching) |
 | **Field Visibility**                 | [Advanced Features](guides/advanced-features.md#field-visibility)                             |

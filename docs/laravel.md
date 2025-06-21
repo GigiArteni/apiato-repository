@@ -43,7 +43,6 @@ This guide explains how to use Apiato Repository in standard Laravel projects, w
 ## 4. Apiato-Specific Features (Not Available in Plain Laravel)
 
 - **HashId auto-integration**: You must manually decode/encode HashIds if not using Apiato.
-- **Automatic sanitization**: Use Laravel's validation and custom logic for sanitization.
 - **Container/Ship structure**: Use standard Laravel folder structure.
 
 ---

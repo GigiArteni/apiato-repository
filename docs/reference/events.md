@@ -16,7 +16,6 @@ Apiato Repository is event-driven at its core. Every major action fires an event
 - `RepositoryBulkUpdated`
 - `RepositoryBulkDeleted`
 - `RepositoryCriteriaApplied`
-- `RepositorySanitizedEvent`
 
 ---
 
@@ -27,7 +26,6 @@ Apiato Repository is event-driven at its core. Every major action fires an event
 - **Deleting**: Before and after a record is deleted
 - **Bulk operations**: For batch create, update, delete
 - **Criteria**: When criteria are applied to a query
-- **Sanitization**: When input is sanitized before persistence
 
 ---
 

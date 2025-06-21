@@ -69,7 +69,7 @@ return [
     |--------------------------------------------------------------------------
     | Advanced Bulk Operations
     |--------------------------------------------------------------------------
-    | Enhanced bulk operations with sanitization and transactions
+    | Enhanced bulk operations
     */
     'bulk_operations' => [
         'enabled' => env('REPOSITORY_BULK_OPERATIONS', true),
@@ -84,12 +84,6 @@ return [
     |--------------------------------------------------------------------------
     */
     'apiato' => [
-        'hashids' => [
-            'enabled' => env('REPOSITORY_HASHIDS_ENABLED', true),
-            'auto_decode' => env('REPOSITORY_HASHIDS_AUTO_DECODE', true),
-            'decode_search' => env('REPOSITORY_HASHIDS_DECODE_SEARCH', true),
-            'decode_filters' => env('REPOSITORY_HASHIDS_DECODE_FILTERS', true),
-        ],
         'performance' => [
             'enhanced_caching' => env('REPOSITORY_ENHANCED_CACHE', true),
             'query_optimization' => env('REPOSITORY_QUERY_OPTIMIZATION', true),

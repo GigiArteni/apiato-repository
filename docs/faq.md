@@ -44,13 +44,10 @@ A: Tune batch size, use deadlock retry logic, and monitor DB logs.
 
 ---
 
-## Validation & Sanitization
+## Validation
 
 **Q: Why does validation fail unexpectedly?**
 A: Check your validator rules and required fields. Use `$repo->validator()->errors()` for details.
-
-**Q: How do I sanitize custom fields?**
-A: Define `protected $customSanitizationRules` in your repository.
 
 ---
 

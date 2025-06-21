@@ -36,9 +36,6 @@ class RepositoryServiceProvider extends ServiceProvider
                 \Apiato\Repository\Generators\Commands\MakeTransformerCommand::class,
             ]);
         }
-
-        // Auto-detect Apiato v.13 environment
-        $this->detectApiatoEnvironment();
     }
 
     /**
@@ -53,35 +50,6 @@ class RepositoryServiceProvider extends ServiceProvider
         
         // Register validators
         $this->registerValidators();
-    }
-
-    /**
-     * Detect Apiato v.13 environment and configure accordingly
-     */
-    protected function detectApiatoEnvironment()
-    {
-        // Check if we're in an Apiato project
-        if ($this->isApiatoProject()) {
-            // Ensure HashIds are enabled by default in Apiato projects
-            if (!config()->has('repository.apiato.hashids.enabled')) {
-                config(['repository.apiato.hashids.enabled' => true]);
-            }
-
-            // Log successful integration
-            if (config('app.debug')) {
-                logger('Apiato Repository: Successfully integrated with Apiato v.13 project');
-            }
-        }
-    }
-
-    /**
-     * Check if this is an Apiato project
-     */
-    protected function isApiatoProject(): bool
-    {
-        return class_exists('App\Ship\Engine\Foundation\Facades\Apiato') || 
-               file_exists(base_path('app/Ship')) ||
-               file_exists(base_path('app/Containers'));
     }
 
     /**
