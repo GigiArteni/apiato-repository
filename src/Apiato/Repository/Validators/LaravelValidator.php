@@ -26,7 +26,7 @@ class LaravelValidator implements ValidatorInterface
     /**
      * Set data to validate
      */
-    public function with(array $input)
+    public function with(array $input): static
     {
         $this->data = $input;
         return $this;
@@ -35,7 +35,7 @@ class LaravelValidator implements ValidatorInterface
     /**
      * Validate data for create action
      */
-    public function passesCreate()
+    public function passesCreate(): bool
     {
         return $this->passes(self::RULE_CREATE);
     }
@@ -43,7 +43,7 @@ class LaravelValidator implements ValidatorInterface
     /**
      * Validate data for update action
      */
-    public function passesUpdate()
+    public function passesUpdate(): bool
     {
         return $this->passes(self::RULE_UPDATE);
     }
@@ -51,7 +51,7 @@ class LaravelValidator implements ValidatorInterface
     /**
      * Validate data for given action
      */
-    public function passes($action = null)
+    public function passes(?string $action = null): bool
     {
         $rules = $this->getRules($action);
         
@@ -77,7 +77,7 @@ class LaravelValidator implements ValidatorInterface
     /**
      * Get validation errors
      */
-    public function errors()
+    public function errors(): array
     {
         return $this->errors;
     }

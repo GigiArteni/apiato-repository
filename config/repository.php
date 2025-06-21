@@ -107,4 +107,12 @@ return [
         'use_transactions' => env('REPOSITORY_BULK_TRANSACTIONS', true),
         'log_performance' => env('REPOSITORY_LOG_PERFORMANCE', false),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | HashId Decoding
+    |--------------------------------------------------------------------------
+    | Enable or disable automatic HashId decoding for all repositories
+    */
+    'hashid_decode' => env('REPOSITORY_HASHID_DECODE', true),
 ];
