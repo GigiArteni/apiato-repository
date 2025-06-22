@@ -345,6 +345,24 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
     }
 
     /**
+     * Retrieve the first record matching the attributes or create it.
+     * HashId decoding is automatic for all repository lookups (see decodeField).
+     *
+     * @param array $attributes
+     * @param array $values
+     * @return Model
+     */
+    public function firstOrCreate(array $attributes, array $values = []): Model
+    {
+        $attributes = array_map(fn($value, $key) => $this->decodeField($key, $value), $attributes, array_keys($attributes));
+        $this->applyCriteria();
+        $this->applyScope();
+        $model = $this->getQuery()->firstOrCreate($attributes, $values);
+        $this->resetModel();
+        return $model;
+    }
+
+    /**
      * Delete a record by its primary key.
      *
      * HashId decoding is automatic for all repository lookups (see decodeField).
