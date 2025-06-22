@@ -169,6 +169,15 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
     }
 
     /**
+     * Find a model by its primary key. Returns null if not found.
+     * HashId decoding is automatic.
+     */
+    public function findById(mixed $id, array $columns = ['*']): ?Model
+    {
+        return $this->find($id, $columns);
+    }
+
+    /**
      * Find records by a field value.
      *
      * HashId decoding is automatic for all repository lookups (see decodeField).
@@ -184,8 +193,23 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
     }
 
     /**
+     * Find multiple models by their primary keys. Returns a collection.
+     * HashId decoding is automatic.
+     */
+    public function findMany(array $ids, array $columns = ['*']): Collection
+    {
+        $ids = $this->decodeField('id', $ids);
+        $this->applyCriteria();
+        $this->applyScope();
+        $result = $this->getQuery()->whereIn('id', $ids)->get($columns);
+        $this->resetModel();
+        $this->resetScope();
+        return $result;
+    }
+
+    /**
      * Find records by multiple where conditions.
-     *
+     *findById 
      * HashId decoding is automatic for all repository lookups (see decodeField).
      * Supports nested/composite keys and custom operators.
      */
