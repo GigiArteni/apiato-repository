@@ -378,6 +378,45 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         return (int)$deleted;
     }
 
+    /**
+     * Get a list of values for a given column.
+     */
+    public function pluck(string $column, ?string $key = null): \Illuminate\Support\Collection
+    {
+        $this->applyCriteria();
+        $this->applyScope();
+        $results = $this->getQuery()->pluck($column, $key);
+        $this->resetModel();
+        $this->resetScope();
+        return $results;
+    }
+
+    /**
+     * Count the number of records matching the current query.
+     */
+    public function count(): int
+    {
+        $this->applyCriteria();
+        $this->applyScope();
+        $count = $this->getQuery()->count();
+        $this->resetModel();
+        $this->resetScope();
+        return $count;
+    }
+
+    /**
+     * Determine if any records exist for the current query.
+     */
+    public function exists(): bool
+    {
+        $this->applyCriteria();
+        $this->applyScope();
+        $exists = $this->getQuery()->exists();
+        $this->resetModel();
+        $this->resetScope();
+        return $exists;
+    }
+
     // ========================================
     // QUERY BUILDER METHODS
     // ========================================
@@ -537,7 +576,12 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
         if (empty($includeParam)) {
             return $query;
         }
-        $relations = array_filter(array_map('trim', explode(',', $includeParam)));
+        // Accept both string and array for compatibility
+        if (is_array($includeParam)) {
+            $relations = $includeParam;
+        } else {
+            $relations = array_filter(array_map('trim', explode(',', $includeParam)));
+        }
         if (!empty($relations)) {
             $query = $query->with($relations);
         }
@@ -566,5 +610,51 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
             return array_map(fn($v) => $this->decodeField($field, $v), $value);
         }
         return HashIdHelper::decodeIfNeeded($field, $value);
+    }
+
+    /**
+     * Find the first record matching the given where conditions.
+     *
+     * HashId decoding is automatic for all repository lookups (see decodeField).
+     * Supports nested/composite keys and custom operators.
+     *
+     * @param array $where
+     * @param array $columns
+     * @return Model|object|null
+     */
+    public function findWhereFirst(array $where, array $columns = ['*']): ?Model
+    {
+        $this->applyCriteria();
+        $this->applyScope();
+        $query = $this->getQuery();
+        foreach ($where as $field => $value) {
+            if (is_array($value)) {
+                // Support for custom operator arrays and nested arrays
+                if (array_is_list($value) && isset($value[0]) && is_array($value[0])) {
+                    foreach ($value as $sub) {
+                        if (is_array($sub) && count($sub) === 3) {
+                            [$f, $condition, $val] = $sub;
+                            $val = $this->decodeField($f, $val);
+                            $query = $query->where($f, $condition, $val);
+                        }
+                    }
+                } elseif (count($value) === 3) {
+                    [$f, $condition, $val] = $value;
+                    $val = $this->decodeField($f, $val);
+                    $query = $query->where($f, $condition, $val);
+                } else {
+                    // Fallback: treat as normal value
+                    $value = $this->decodeField($field, $value);
+                    $query = $query->where($field, '=', $value);
+                }
+            } else {
+                $value = $this->decodeField($field, $value);
+                $query = $query->where($field, '=', $value);
+            }
+        }
+        $result = $query->first($columns);
+        $this->resetModel();
+        $this->resetScope();
+        return $result;
     }
 }
