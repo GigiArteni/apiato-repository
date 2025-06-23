@@ -337,6 +337,10 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
 
     public function updateOrCreate(array $attributes, array $values = []): mixed
     {
+        // Decode attributes in a key-preserving way
+        foreach ($attributes as $key => $value) {
+            $attributes[$key] = $this->decodeField($key, $value);
+        }
         $this->applyCriteria();
         $this->applyScope();
         $model = $this->getQuery()->updateOrCreate($attributes, $values);
@@ -354,7 +358,10 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
      */
     public function firstOrCreate(array $attributes, array $values = []): Model
     {
-        $attributes = array_map(fn($value, $key) => $this->decodeField($key, $value), $attributes, array_keys($attributes));
+        // Decode attributes in a key-preserving way
+        foreach ($attributes as $key => $value) {
+            $attributes[$key] = $this->decodeField($key, $value);
+        }
         $this->applyCriteria();
         $this->applyScope();
         $model = $this->getQuery()->firstOrCreate($attributes, $values);
