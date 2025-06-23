@@ -305,10 +305,11 @@ abstract class BaseRepository implements RepositoryInterface, CacheableInterface
                 throw new \Exception('Validation failed: ' . json_encode($this->validator->errors()));
             }
         }
-        $model = $this->model->newInstance($attributes);
+        $model = $this->getQuery()->create($attributes);
         $model->save();
         $this->resetModel();
         return $model;
+        
     }
 
     /**
